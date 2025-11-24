@@ -1,0 +1,18 @@
+services:
+  database:
+    image: postgres:11
+    container_name: sbs-ai-discovery-db
+    restart: on-failure
+    healthcheck:
+      test: "pg_isready --username=sbs-ai-discovery-user -d sbs-ai-discovery-db -q"
+      timeout: 10s
+      retries: 20
+    volumes:
+      - ./db-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db-data/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: 'sbs-ai-discovery-db'
+      POSTGRES_USER: 'sbs-ai-discovery-user'
+      POSTGRES_PASSWORD: 'sbs-ai-discovery-password'
+    ports:
+      - '5433:5432'
