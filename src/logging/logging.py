@@ -1,4 +1,4 @@
-"""Structured logging configuration for the MCP server.
+"""Structured logging configuration for SBS AI Discovery Agent.
 
 This module configures structlog for structured logging with JSON output in production
 and pretty console output for local development.
