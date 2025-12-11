@@ -4,11 +4,9 @@ import requests
 from src.db.conn import get_session
 from src.db.models import AiDiscoveryData, FactSheet, Repository
 from src.logging.logging import configure_structlog, get_logger
-from dotenv import load_dotenv
 import json
 import uuid
 
-load_dotenv()
 configure_structlog()
 logger = get_logger(__name__)
 
