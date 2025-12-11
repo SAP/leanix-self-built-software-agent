@@ -1,8 +1,6 @@
 import os
 from typing import Final
 
-from dotenv import load_dotenv
-from gen_ai_hub.proxy.langchain import init_llm
 from langchain_core.prompts import PromptTemplate
 
 from src.ai_provider.ai_provider import init_llm_by_provider
@@ -12,7 +10,6 @@ from src.nodes.runnables.discover_codeowners_runnable import discover_codeowners
 import json
 import re
 
-load_dotenv()
 logger = get_logger(__name__)
 
 MODEL_NAME: Final[str] = os.getenv("LLM_DEPLOYMENT", "gpt-4.1")

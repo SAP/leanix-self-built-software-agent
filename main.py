@@ -3,12 +3,8 @@ from __future__ import annotations
 import os
 
 import requests
-from dotenv import load_dotenv
 
 from src.db.models import init_db
-
-load_dotenv()
-
 from src.logging.logging import configure_structlog, get_logger
 from src.converter.converters import coerce_state
 from src.dto.state_dto import RootRepoState

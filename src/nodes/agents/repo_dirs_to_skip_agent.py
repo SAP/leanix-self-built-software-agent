@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from langchain.agents import initialize_agent
 
 from src.ai_provider.ai_provider import init_llm_by_provider
@@ -6,7 +5,6 @@ from src.dto.state_dto import RootRepoState
 from src.logging.logging import get_logger
 from src.tools.classify_repo_type_tool import classify_repo_type_tool
 
-load_dotenv()
 logger = get_logger(__name__)
 
 def repo_type_inspector_agent(state: RootRepoState) -> RootRepoState:

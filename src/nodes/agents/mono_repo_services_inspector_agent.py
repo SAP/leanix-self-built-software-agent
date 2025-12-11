@@ -1,6 +1,5 @@
 import json
 
-from dotenv import load_dotenv
 from langchain import hub
 from langchain.agents import create_react_agent, AgentExecutor
 
@@ -10,7 +9,6 @@ from src.logging.logging import get_logger
 from src.tools.discover_services_tool import discover_services_tool, repo_get_head_sha, repo_list_tree, repo_read_file, \
     repo_search_code
 
-load_dotenv()
 logger = get_logger(__name__)
 
 
