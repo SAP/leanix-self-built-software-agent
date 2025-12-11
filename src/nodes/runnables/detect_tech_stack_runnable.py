@@ -37,12 +37,16 @@ def detect_tech_stack_runnable(state: RootRepoState) -> RootRepoState:
                     result = tech_stack_agent(content)
                     logger.info(f"Tech stack agent result for {file_path}: {result}")
                     for stack_item in getattr(result, "tech_stacks", result.get("tech_stacks", [])):
-                        tech_stacks.append(TechStack(
-                            name=stack_item["name"] if isinstance(stack_item, dict) else stack_item.name,
-                            version=stack_item["version"] if isinstance(stack_item, dict) else stack_item.version,
-                            confidence=stack_item["confidence"] if isinstance(stack_item, dict) else stack_item.confidence,
-                            evidence=stack_item["evidence"],
-                        ))
+                        if stack_item and all(
+                            stack_item.get(key) if isinstance(stack_item, dict) else getattr(stack_item, key, None)
+                            for key in ["name", "version", "confidence", "evidence"]
+                        ):
+                            tech_stacks.append(TechStack(
+                                name=stack_item["name"] if isinstance(stack_item, dict) else stack_item.name,
+                                version=stack_item["version"] if isinstance(stack_item, dict) else stack_item.version,
+                                confidence=stack_item["confidence"] if isinstance(stack_item, dict) else stack_item.confidence,
+                                evidence=stack_item["evidence"] if isinstance(stack_item, dict) else stack_item.evidence,
+                            ))
                 except Exception as e:
                     logger.warning(f"Failed to process {file_path}: {e}")
 
