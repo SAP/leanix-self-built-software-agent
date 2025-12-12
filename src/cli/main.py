@@ -132,13 +132,15 @@ def version(ctx: click.Context) -> None:
 
 
 # Import and register command groups
+from src.cli.discover import discover
+
+cli.add_command(discover)
+
 # These will be added as we implement each command module
-# from src.cli.discover import discover
 # from src.cli.config import config_group
 # from src.cli.db import db_group
 # from src.cli.sync import sync_group
 
-# cli.add_command(discover)
 # cli.add_command(config_group, name='config')
 # cli.add_command(db_group, name='db')
 # cli.add_command(sync_group, name='sync')
