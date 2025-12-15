@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,37 +47,102 @@ def _init_azure_llm(model_name: str) -> Any:
     except ImportError as e:
         raise ImportError("langchain_openai is required for Azure OpenAI provider") from e
 
-def init_llm_by_provider() -> Any:
+def init_llm_by_provider(model_name: Optional[str] = None) -> Any:
     """
     Initialize an LLM instance based on available provider configuration.
+
+    Args:
+        model_name: Optional model name to use. If None, uses LLM_DEPLOYMENT env var or defaults.
 
     Returns:
         An initialized LLM instance from the first available provider.
 
     Raises:
-        ValueError: If no LLM provider is configured.
+        ValueError: If no LLM provider is configured or model is invalid.
         ImportError: If required dependencies for the provider are missing.
     """
-    # Check providers and set appropriate default model for each
-    if os.getenv("OPENAI_API_KEY"):
-        model_name = os.getenv("LLM_DEPLOYMENT", "gpt-4o")
-        logger.info("Using OpenAI as LLM provider")
-        return _init_openai_llm(model_name)
-    elif os.getenv("ANTHROPIC_API_KEY"):
-        model_name = os.getenv("LLM_DEPLOYMENT", "claude-3-5-sonnet-20241022")
-        logger.info("Using Anthropic as LLM provider")
-        return _init_anthropic_llm(model_name)
-    elif os.getenv("AICORE_CLIENT_ID"):
-        model_name = os.getenv("LLM_DEPLOYMENT", "gpt-4o")
-        logger.info("Using SAP AI Core as LLM provider")
-        return _init_sap_aicore_llm(model_name)
-    elif os.getenv("AZURE_OPENAI_API_KEY"):
-        model_name = os.getenv("LLM_DEPLOYMENT", "gpt-4o")
-        logger.info("Using Azure OpenAI as LLM provider")
-        return _init_azure_llm(model_name)
+    # Determine provider and get model name
+    provider = None
+    provider_name = None
+    default_model = None
 
-    raise ValueError(
-        "No LLM provider configured. Please set one of: "
-        "OPENAI_API_KEY, ANTHROPIC_API_KEY, AICORE_CLIENT_ID, or AZURE_OPENAI_API_KEY"
-    )
+    if os.getenv("OPENAI_API_KEY"):
+        provider = _init_openai_llm
+        provider_name = "openai"
+        default_model = "gpt-4o"
+    elif os.getenv("ANTHROPIC_API_KEY"):
+        provider = _init_anthropic_llm
+        provider_name = "anthropic"
+        default_model = "claude-3-5-sonnet-20241022"
+    elif os.getenv("AICORE_CLIENT_ID"):
+        provider = _init_sap_aicore_llm
+        provider_name = "aicore"
+        default_model = "gpt-4o"
+    elif os.getenv("AZURE_OPENAI_API_KEY"):
+        provider = _init_azure_llm
+        provider_name = "azure"
+        default_model = "gpt-4o"
+    else:
+        raise ValueError(
+            "No LLM provider configured. Please set one of: "
+            "OPENAI_API_KEY, ANTHROPIC_API_KEY, AICORE_CLIENT_ID, or AZURE_OPENAI_API_KEY"
+        )
+
+    # Determine which model to use (priority: parameter > env var > default)
+    final_model = model_name or os.getenv("LLM_DEPLOYMENT", default_model)
+
+    logger.info(f"Using {provider_name} as LLM provider with model: {final_model}")
+
+    # Initialize the LLM
+    llm = provider(final_model)
+
+    return llm
+
+
+def validate_llm_availability(model_name: Optional[str] = None) -> tuple[bool, Optional[str]]:
+    """
+    Validate that the LLM model is actually available and accessible.
+
+    Makes a simple test call to verify:
+    - API credentials are valid
+    - Model exists and is accessible
+    - Network connectivity works
+
+    Args:
+        model_name: Optional model name to test. If None, uses default for configured provider.
+
+    Returns:
+        Tuple of (is_available, error_message)
+        - (True, None) if model is available
+        - (False, error_message) if model is not available
+    """
+    try:
+        # Initialize the LLM
+        llm = init_llm_by_provider(model_name)
+
+        # Make a minimal test call to verify the model is accessible
+        logger.info("Testing LLM availability with a simple prompt...")
+
+        # Use a very simple prompt to minimize cost and latency
+        test_response = llm.invoke("Hi")
+
+        # If we got here, the model is available
+        logger.info("LLM availability test passed")
+        return (True, None)
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"LLM availability test failed: {error_message}")
+
+        # Provide helpful error messages based on common issues
+        if "authentication" in error_message.lower() or "api key" in error_message.lower():
+            return (False, f"Authentication failed: {error_message}\n\nPlease check your API key is valid and has not expired.")
+        elif "not found" in error_message.lower() or "does not exist" in error_message.lower():
+            return (False, f"Model not found: {error_message}\n\nThe model may not be available in your account or region.")
+        elif "quota" in error_message.lower() or "rate limit" in error_message.lower():
+            return (False, f"Rate limit or quota exceeded: {error_message}\n\nPlease check your API usage limits.")
+        elif "permission" in error_message.lower() or "access" in error_message.lower():
+            return (False, f"Permission denied: {error_message}\n\nYou may not have access to this model.")
+        else:
+            return (False, f"LLM validation failed: {error_message}")
 

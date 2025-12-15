@@ -2,6 +2,7 @@ from typing import List
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
 
 from src.ai_provider.ai_provider import init_llm_by_provider
@@ -22,10 +23,12 @@ class ListOfIndividuals(BaseModel):
     individuals: List[IndividualResult]
 
 
-def individual_contributors_service_agent(state: RootRepoState) -> RootRepoState:
+def individual_contributors_service_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
     """Takes repository data, and find the individual contributors for each service on the repository"""
 
-    llm = init_llm_by_provider()
+    # Get model name from config if provided
+    model_name = config.get("configurable", {}).get("model_name") if config else None
+    llm = init_llm_by_provider(model_name)
     parser = JsonOutputParser(pydantic_object=ListOfIndividuals)
     for service in state.self_built_software:
         individuals_list = discover_individual_contributors_runnable(state.local_path, service.name, service.path)

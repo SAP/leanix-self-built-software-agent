@@ -8,6 +8,7 @@ from sqlalchemy import text
 
 from src.db.conn import get_session
 from src.logging.logging import get_logger
+from src.ai_provider.ai_provider import validate_llm_availability
 
 console = Console()
 logger = get_logger(__name__)
@@ -184,3 +185,65 @@ def validate_leanix_credentials(
         )
 
     return leanix_token, leanix_domain
+
+
+def get_configured_provider() -> str:
+    """
+    Determine which AI provider is configured.
+
+    Returns:
+        Provider name: 'openai', 'anthropic', 'azure', or 'aicore'
+
+    Raises:
+        ValueError: If no provider is configured
+    """
+    if os.getenv("OPENAI_API_KEY"):
+        return "openai"
+    elif os.getenv("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    elif os.getenv("AICORE_CLIENT_ID"):
+        return "aicore"
+    elif os.getenv("AZURE_OPENAI_API_KEY"):
+        return "azure"
+    else:
+        raise ValueError(
+            "No AI provider configured. Please set one of: "
+            "OPENAI_API_KEY, ANTHROPIC_API_KEY, AICORE_CLIENT_ID, or AZURE_OPENAI_API_KEY"
+        )
+
+
+def validate_llm_model_availability(model: Optional[str]) -> bool:
+    """
+    Validate that the LLM model is actually available and accessible.
+
+    Makes a test API call to verify:
+    - API credentials are valid
+    - Model exists and is accessible
+    - Network connectivity works
+
+    Args:
+        model: LLM model name to test (already validated and resolved)
+
+    Returns:
+        True if model is available
+
+    Raises:
+        ValueError: If model is not available with detailed error message
+    """
+    logger.info(f"Validating LLM availability for model: {model}")
+
+    is_available, error_message = validate_llm_availability(model)
+
+    if not is_available:
+        raise ValueError(
+            f"LLM model is not available: {model}\n\n"
+            f"{error_message}\n\n"
+            f"Please verify:\n"
+            f"  - Your API credentials are valid\n"
+            f"  - The model is available in your account/region\n"
+            f"  - You have sufficient quota/credits\n"
+            f"  - Network connectivity is working"
+        )
+
+    logger.info(f"LLM availability validated successfully for: {model}")
+    return True

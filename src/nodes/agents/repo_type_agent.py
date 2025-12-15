@@ -1,4 +1,6 @@
+from typing import Any
 from langchain.agents import initialize_agent
+from langchain_core.runnables import RunnableConfig
 
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState
@@ -7,10 +9,12 @@ from src.tools.classify_repo_type_tool import classify_repo_type_tool
 
 logger = get_logger(__name__)
 
-def repo_type_inspector_agent(state: RootRepoState) -> RootRepoState:
+def repo_type_inspector_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
     """Takes repository data, and determines if a repository is a mono-repo or single-purpose-repo"""
 
-    llm = init_llm_by_provider()
+    # Get model name from config if provided
+    model_name = config.get("configurable", {}).get("model_name") if config else None
+    llm = init_llm_by_provider(model_name)
     tools = [classify_repo_type_tool]
     repo_root_url = state.repo_root_url
 

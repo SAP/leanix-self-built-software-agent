@@ -1,6 +1,5 @@
 """Discovery comand for processing GitHub repositories."""
 
-import logging
 import signal
 import sys
 from typing import Optional
@@ -27,6 +26,7 @@ from src.cli.utils.validators import (
     validate_database_connection,
     validate_mutually_exclusive,
     validate_ai_provider,
+    validate_llm_model_availability,
 )
 from src.cli.utils.formatters import (
     format_summary_table,
@@ -94,6 +94,12 @@ def signal_handler(signum, frame):
     type=str,
     help='Override GITHUB_TOKEN from environment'
 )
+@click.option(
+    '--llm',
+    type=str,
+    metavar='MODEL_NAME',
+    help='LLM model to use for discovery (e.g., gpt-4o, claude-sonnet, gpt-4o-mini)'
+)
 @click.pass_context
 def discover(
     ctx: click.Context,
@@ -103,7 +109,8 @@ def discover(
     dry_run: bool,
     skip_archived: bool,
     limit: Optional[int],
-    github_token: Optional[str]
+    github_token: Optional[str],
+    llm: Optional[str]
 ):
     """
     Discover self-built software in GitHub repositories.
@@ -119,6 +126,10 @@ def discover(
 
         # Discover single repository
         sbs-ai-discovery discover --repo owner/repo
+
+        # Use specific LLM model
+        sbs-ai-discovery discover --org myorg --llm gpt-4o
+        sbs-ai-discovery discover --repo owner/repo --llm claude-sonnet
 
         # Dry run without saving to database
         sbs-ai-discovery discover --org myorg --dry-run
@@ -147,6 +158,15 @@ def discover(
         # Display mode indicators
         if dry_run:
             console.print("[yellow][DRY RUN MODE] - No data will be saved to database[/yellow]\n")
+
+        # Display LLM model if specified
+        if llm:
+            console.print(f"[cyan]Using LLM model:[/cyan] {llm}\n")
+
+        # Validate LLM availability with a test call
+        console.print("[cyan]Validating LLM availability...[/cyan]")
+        validate_llm_model_availability(llm)
+        console.print("[green]✓[/green] LLM model is available and accessible\n")
 
         # Determine source and fetch repositories
         if org:
@@ -259,9 +279,16 @@ def discover(
                     # Create initial state
                     initial_state = RootRepoState(repo_root_url=repo_url)
 
+                    # Prepare config with model name if specified
+                    config = {
+                        "configurable": {
+                            "model_name": llm
+                        }
+                    } if llm else {}
+
                     # Invoke workflow
                     logger.info(f"Processing repository: {repo_url}")
-                    response = workflow.invoke(initial_state, config={})
+                    response = workflow.invoke(initial_state, config=config)
 
                     # Convert and coerce state
                     pred_state = coerce_state(response)
