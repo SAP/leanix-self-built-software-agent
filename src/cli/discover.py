@@ -3,7 +3,7 @@
 import logging
 import signal
 import sys
-from typing import Dict, List, Optional
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -36,13 +36,14 @@ from src.cli.utils.formatters import (
 )
 from src.converter.converters import coerce_state
 from src.dto.state_dto import RootRepoState, RepoType
-from src.logging.logging import get_logger
+from src.logging.logging import get_logger, configure_structlog
 from src.services.organizations import create_org_if_not_exists
 from src.services.repositories import create_repository
 from src.workflows.repo_type_workflow import generate_repo_type_workflow
 from src.db.models import init_db
 
 console = Console()
+configure_structlog()
 logger = get_logger(__name__)
 
 # Global flag for graceful shutdown
@@ -129,28 +130,6 @@ def discover(
         sbs-ai-discovery discover --org myorg --limit 10
     """
     global interrupted
-
-    # Suppress logs unless there's an error (only show WARNING and above)
-    # This prevents INFO logs from cluttering the console output
-    logging.getLogger().setLevel(logging.WARNING)
-
-    # Also suppress structlog console output
-    import structlog
-    structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.dev.ConsoleRenderer() if ctx.obj and ctx.obj.get('verbose') else structlog.processors.JSONRenderer(),
-        ],
-        wrapper_class=structlog.stdlib.BoundLogger,
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
 
     # Register signal handler for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)

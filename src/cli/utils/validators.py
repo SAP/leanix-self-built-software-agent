@@ -138,3 +138,49 @@ def validate_ai_provider() -> bool:
 
     logger.info(f"AI provider configured: {', '.join(configured)}")
     return True
+
+
+def validate_leanix_credentials(
+    token: Optional[str] = None,
+    domain: Optional[str] = None
+) -> tuple[str, str]:
+    """
+    Validate that LeanIX credentials are available.
+
+    Checks in order:
+    1. Provided token/domain parameters
+    2. LEANIX_TOKEN and LEANIX_DOMAIN environment variables
+
+    Args:
+        token: LeanIX token from command line or None
+        domain: LeanIX domain from command line or None
+
+    Returns:
+        Tuple of (token, domain)
+
+    Raises:
+        ValueError: If credentials are missing
+    """
+    leanix_token = token or os.getenv('LEANIX_TOKEN')
+    leanix_domain = domain or os.getenv('LEANIX_DOMAIN')
+
+    missing = []
+    if not leanix_token:
+        missing.append('LEANIX_TOKEN')
+    if not leanix_domain:
+        missing.append('LEANIX_DOMAIN')
+
+    if missing:
+        raise ValueError(
+            f"LeanIX credentials not found: {', '.join(missing)}\n"
+            "Set them in environment or .env file, or use --leanix-token and --leanix-domain options\n\n"
+            "Example:\n"
+            "  export LEANIX_TOKEN=your-token\n"
+            "  export LEANIX_DOMAIN=company.leanix.net\n"
+            "  sbs-ai-discovery sync pathfinder\n"
+            "\n"
+            "Or:\n"
+            "  sbs-ai-discovery sync pathfinder --leanix-token your-token --leanix-domain company.leanix.net"
+        )
+
+    return leanix_token, leanix_domain
