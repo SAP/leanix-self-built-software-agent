@@ -254,15 +254,6 @@ uv run pytest
 uv run pytest --cov=src --cov-report=html
 ```
 
-## Documentation
-
-For more detailed information, see:
-
-- [LLM Availability Validation](./LLM-AVAILABILITY-VALIDATION.md) - Model validation and error handling
-- [CLI Quick Reference](./CLI_QUICK_REFERENCE.md) - Command reference guide
-- [Environment Configuration](./ENV_FILE_OPTION_DOCS.md) - Detailed environment setup
-- [Sync Command](./SYNC_COMMAND_SUMMARY.md) - Synchronization features
-
 ## How It Works
 
 ### Discovery Pipeline
