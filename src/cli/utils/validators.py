@@ -186,32 +186,6 @@ def validate_leanix_credentials(
 
     return leanix_token, leanix_domain
 
-
-def get_configured_provider() -> str:
-    """
-    Determine which AI provider is configured.
-
-    Returns:
-        Provider name: 'openai', 'anthropic', 'azure', or 'aicore'
-
-    Raises:
-        ValueError: If no provider is configured
-    """
-    if os.getenv("OPENAI_API_KEY"):
-        return "openai"
-    elif os.getenv("ANTHROPIC_API_KEY"):
-        return "anthropic"
-    elif os.getenv("AICORE_CLIENT_ID"):
-        return "aicore"
-    elif os.getenv("AZURE_OPENAI_API_KEY"):
-        return "azure"
-    else:
-        raise ValueError(
-            "No AI provider configured. Please set one of: "
-            "OPENAI_API_KEY, ANTHROPIC_API_KEY, AICORE_CLIENT_ID, or AZURE_OPENAI_API_KEY"
-        )
-
-
 def validate_llm_model_availability(model: Optional[str]) -> bool:
     """
     Validate that the LLM model is actually available and accessible.
