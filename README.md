@@ -34,6 +34,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 git clone https://github.com/LeanIX/sbs-ai-discovery.git
 cd sbs-ai-discovery
 uv venv && uv sync
+source .venv/bin/activate
 ```
 
 ### Homebrew
@@ -46,6 +47,7 @@ brew install uv
 git clone https://github.com/LeanIX/sbs-ai-discovery.git
 cd sbs-ai-discovery
 uv venv && uv sync
+source .venv/bin/activate
 ```
 
 ### Python Version
