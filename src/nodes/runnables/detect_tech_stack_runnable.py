@@ -1,7 +1,9 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from src.dto.state_dto import RootRepoState, SelfBuiltComponent, TechStack
+from langchain_core.runnables import RunnableConfig
+
+from src.dto.state_dto import RootRepoState, TechStack
 from src.nodes.agents.tech_stack_agent import tech_stack_agent
 from src.logging.logging import get_logger
 
@@ -13,7 +15,7 @@ PACKAGE_MANAGER_FILES = [
     "go.mod", "Cargo.toml"
 ]
 
-def detect_tech_stack_runnable(state: RootRepoState) -> RootRepoState:
+def detect_tech_stack_runnable(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
     """
     For each self-built component, find package manager files and extract tech stack using LLM agent.
     """
@@ -34,7 +36,9 @@ def detect_tech_stack_runnable(state: RootRepoState) -> RootRepoState:
             for file_path in found_files:
                 try:
                     content = file_path.read_text(encoding="utf-8")
-                    result = tech_stack_agent(content)
+                    # Get model name from config if provided
+                    model_name = config.get("configurable", {}).get("model_name") if config else None
+                    result = tech_stack_agent(content, model_name)
                     logger.info(f"Tech stack agent result for {file_path}: {result}")
                     for stack_item in getattr(result, "tech_stacks", result.get("tech_stacks", [])):
                         if stack_item and all(

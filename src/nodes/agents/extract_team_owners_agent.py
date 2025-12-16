@@ -1,7 +1,6 @@
-import os
-from typing import Final
 
 from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnableConfig
 
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState
@@ -12,16 +11,16 @@ import re
 
 logger = get_logger(__name__)
 
-MODEL_NAME: Final[str] = os.getenv("LLM_DEPLOYMENT", "gpt-4.1")
 
-
-def extract_team_owners_agent(state: RootRepoState) -> RootRepoState:
+def extract_team_owners_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
     """Extracts team names from list of codeowners"""
     logger.info(f"Repo URL: {state.repo_root_url}, deployable: {state.deployable}")
     if state.deployable:
         logger.info("Starting to extract team names from codeowners")
         try:
-            llm = init_llm_by_provider()
+            # Get model name from config if provided
+            model_name = config.get("configurable", {}).get("model_name") if config else None
+            llm = init_llm_by_provider(model_name)
 
             codeowners_content = discover_codeowners_runnable(state.repo_root_url)
             logger.info(f"codeowners_file_content: \n{codeowners_content}")

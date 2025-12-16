@@ -1,5 +1,6 @@
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
 
 from src.ai_provider.ai_provider import init_llm_by_provider
@@ -14,10 +15,12 @@ class LanguageResult(BaseModel):
     version: str = Field(description="Language Version")
     reason: str = Field(description="Reason for the decision, base on the files found on the service")
 
-def languages_service_agent(state: RootRepoState) -> RootRepoState:
+def languages_service_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
     """Takes repository data, and find languages for each service on the repository"""
 
-    llm = init_llm_by_provider()
+    # Get model name from config if provided
+    model_name = config.get("configurable", {}).get("model_name") if config else None
+    llm = init_llm_by_provider(model_name)
     parser = JsonOutputParser(pydantic_object=LanguageResult)
     prompt_text = """
         ## Role

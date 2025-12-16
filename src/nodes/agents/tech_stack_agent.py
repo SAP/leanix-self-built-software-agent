@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -30,10 +30,11 @@ class TechStack(BaseModel):
 class TechStackResult(BaseModel):
     tech_stacks: List[TechStack] = Field(description="List of tech stacks with name and version")
 
-def tech_stack_agent(dependency_file_content: str) -> TechStackResult:
+def tech_stack_agent(dependency_file_content: str, model_name: Optional[str] = None) -> TechStackResult:
     """
     Analyze a dependency management file and return a list of tech stacks used, including name and version.
     """
+    llm = init_llm_by_provider(model_name)
     parser = JsonOutputParser(pydantic_object=TechStackResult)
     prompt_text = """
         SYSTEM: You must reply ONLY with a valid JSON object matching the output schema below.
@@ -107,7 +108,6 @@ def tech_stack_agent(dependency_file_content: str) -> TechStackResult:
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
 
-    llm = init_llm_by_provider()
     chain = prompt | llm | parser
 
     try:

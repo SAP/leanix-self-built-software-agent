@@ -2,6 +2,7 @@ import json
 
 from langchain import hub
 from langchain.agents import create_react_agent, AgentExecutor
+from langchain_core.runnables import RunnableConfig
 
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState, SelfBuiltComponent, Owner, ComponentType
@@ -12,10 +13,12 @@ from src.tools.discover_services_tool import discover_services_tool, repo_get_he
 logger = get_logger(__name__)
 
 
-def monorepo_inspector_agent(state: RootRepoState) -> RootRepoState:
+def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
     logger.info("👀  extra checks for *mono-repo* – placeholder implementation")
 
-    llm = init_llm_by_provider()
+    # Get model name from config if provided
+    model_name = config.get("configurable", {}).get("model_name") if config else None
+    llm = init_llm_by_provider(model_name)
     tools = [discover_services_tool, repo_get_head_sha, repo_list_tree, repo_read_file, repo_search_code]
     repo_root_url = state.repo_root_url
 
