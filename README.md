@@ -147,8 +147,6 @@ Synchronize discovery results with external systems:
 # Sync repositories
 sbs-ai-discovery sync --org myorg
 
-# Sync with specific configuration
-sbs-ai-discovery sync --org myorg --config sync-config.json
 ```
 
 ### Output Formats
