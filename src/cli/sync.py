@@ -1,5 +1,4 @@
 """Sync command for syncing discovery data to external systems."""
-import logging
 import sys
 from typing import Optional
 
