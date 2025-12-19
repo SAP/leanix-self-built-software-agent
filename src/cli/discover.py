@@ -240,9 +240,15 @@ def discover(
             'mono_repos': 0,
             'single_purpose_repos': 0,
             'total_services': 0,
+            'unique_teams': 0,
+            'total_tech_stacks': 0,
             'failed': 0,
             'errors': []
         }
+
+        # Track unique teams and tech stacks
+        unique_teams = set()
+        total_tech_stacks = 0
 
         # Store results for JSON export
         results = []
@@ -309,6 +315,20 @@ def discover(
                             stats['single_purpose_repos'] += 1
 
                         stats['total_services'] += len(pred_state.self_built_software)
+
+                        # Collect team and tech stack data
+                        for component in pred_state.self_built_software:
+                            # Track teams
+                            if component.owner and component.owner.team:
+                                # Handle both string and list/array of teams
+                                if isinstance(component.owner.team, list):
+                                    unique_teams.update(component.owner.team)
+                                else:
+                                    unique_teams.add(component.owner.team)
+
+                            # Count tech stacks
+                            if component.tech_stacks:
+                                total_tech_stacks += len(component.tech_stacks)
                     else:
                         stats['non_deployable'] += 1
 
@@ -330,6 +350,10 @@ def discover(
 
                 finally:
                     progress.update(task, advance=1)
+
+        # Update final stats
+        stats['unique_teams'] = len(unique_teams)
+        stats['total_tech_stacks'] = total_tech_stacks
 
         # Display summary
         console.print()
