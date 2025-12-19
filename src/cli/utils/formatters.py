@@ -35,6 +35,8 @@ def format_summary_table(stats: Dict[str, int]) -> Table:
     table.add_row("Mono-repos", str(stats.get('mono_repos', 0)))
     table.add_row("Single-purpose", str(stats.get('single_purpose_repos', 0)))
     table.add_row("Services found", str(stats.get('total_services', 0)))
+    table.add_row("Unique teams", str(stats.get('unique_teams', 0)))
+    table.add_row("Tech stacks", str(stats.get('total_tech_stacks', 0)))
     table.add_row("Failed", str(stats.get('failed', 0)), style="red" if stats.get('failed', 0) > 0 else "green")
 
     return table
@@ -118,6 +120,8 @@ def export_to_json(
             "mono_repos": stats.get('mono_repos', 0),
             "single_purpose_repos": stats.get('single_purpose_repos', 0),
             "total_services": stats.get('total_services', 0),
+            "unique_teams": stats.get('unique_teams', 0),
+            "total_tech_stacks": stats.get('total_tech_stacks', 0),
             "failed": stats.get('failed', 0)
         }
     }
