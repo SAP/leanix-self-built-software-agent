@@ -1,4 +1,4 @@
-# SBS AI Discovery
+****# SBS AI Discovery
 
 **A CLI tool and library for automated discovery and analysis of self-built software in GitHub repositories using AI agents. Identifies services, dependencies, technology stacks, and runtime details without human intervention.**
 
@@ -154,10 +154,10 @@ Improve discovery accuracy by providing domain-specific context that the AI agen
 
 The tool automatically looks for context files in two locations:
 
-| Scope | Location | Purpose |
-|-------|----------|---------|
-| **Organization** | `~/.sbs-discovery/{org}.md` | Shared patterns across all repos |
-| **Repository** | `.sbs-discovery.md` in repo root | Repo-specific overrides |
+| Scope            | Location                         | Purpose                          |
+| ---------------- | -------------------------------- | -------------------------------- |
+| **Organization** | `~/.sbs-discovery/{org}.md`      | Shared patterns across all repos |
+| **Repository**   | `.sbs-discovery.md` in repo root | Repo-specific overrides          |
 
 When both exist, repository context extends and overrides organization context.
 
@@ -266,14 +266,14 @@ sbs-ai-discovery/
 
 ## Key Technologies
 
-| Library        | Purpose                                           |
-| -------------- | ------------------------------------------------- |
-| **LangChain**  | Chain-of-thought prompts and LLM integrations     |
-| **LangGraph**  | State-based orchestration for AI agent workflows  |
-| **SQLAlchemy** | Database ORM for PostgreSQL and SQLite            |
-| **PyGithub**   | GitHub API client for repository analysis         |
-| **structlog**  | Structured logging for better observability       |
-| **uv**         | Fast Python package and project manager           |
+| Library        | Purpose                                          |
+| -------------- | ------------------------------------------------ |
+| **LangChain**  | Chain-of-thought prompts and LLM integrations    |
+| **LangGraph**  | State-based orchestration for AI agent workflows |
+| **SQLAlchemy** | Database ORM for PostgreSQL and SQLite           |
+| **PyGithub**   | GitHub API client for repository analysis        |
+| **structlog**  | Structured logging for better observability      |
+| **uv**         | Fast Python package and project manager          |
 
 ## Database Setup
 
