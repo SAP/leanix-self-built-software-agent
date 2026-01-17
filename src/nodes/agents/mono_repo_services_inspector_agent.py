@@ -9,6 +9,7 @@ from src.dto.state_dto import RootRepoState, SelfBuiltComponent, Owner, Componen
 from src.logging.logging import get_logger
 from src.tools.discover_services_tool import discover_services_tool, repo_get_head_sha, repo_list_tree, repo_read_file, \
     repo_search_code
+from src.utils.context_injection import format_context_for_prompt
 
 logger = get_logger(__name__)
 
@@ -22,12 +23,15 @@ def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> Ro
     tools = [discover_services_tool, repo_get_head_sha, repo_list_tree, repo_read_file, repo_search_code]
     repo_root_url = state.repo_root_url
 
+    # Get user-provided context for injection into prompt
+    context_section = format_context_for_prompt(state.discovery_context)
+
     prompt = (
-        "## Role"
-        f"You are a software discovery analyst. Your job is to find deployable self-built software (services/apps/artifacts) inside a single Git monorepo, hosted on {repo_root_url}."
+        "## Role\n"
+        f"You are a software discovery analyst. Your job is to find deployable self-built software (services/apps/artifacts) inside a single Git monorepo, hosted on {repo_root_url}.\n"
+        f"{context_section}"
         """
-        
-        ## Definition of “self-built software”
+## Definition of "self-built software"
         A deployable unit intended to run independently (e.g., web/API service, worker/consumer, CLI app, scheduled job, serverless function, microservice). Libraries or shared packages that are not deployed independently are not services.
         
         ## Hard rules
