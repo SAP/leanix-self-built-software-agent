@@ -5,6 +5,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
+from src.dto.context_dto import DiscoveryContext
+
 
 class RepoType(str, Enum):
     MONO_REPO = "mono-repo"
@@ -66,6 +68,7 @@ class RootRepoState:
     repo_type: Optional[RepoType] = None
     self_built_software: List[SelfBuiltComponent] = field(default_factory=list)
     repo_type_evidence: Optional[str] = None
+    discovery_context: Optional[DiscoveryContext] = None
 
 
 # A mapping from root_repo_url -> RootRepo
