@@ -361,6 +361,14 @@ def discover(
                     else:
                         stats['non_deployable'] += 1
 
+                    # Display context info if loaded
+                    if pred_state.discovery_context:
+                        ctx = pred_state.discovery_context
+                        if ctx.org_context_path:
+                            console.print(f"  [dim]Org context:[/dim] {ctx.org_context_path}")
+                        if ctx.repo_context_path:
+                            console.print(f"  [dim]Repo context:[/dim] {ctx.repo_context_path}")
+
                     # Display status
                     format_repo_status(repo_url, pred_state)
 
