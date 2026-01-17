@@ -2,6 +2,7 @@
 
 import signal
 import sys
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -180,6 +181,18 @@ def discover(
         validate_llm_model_availability(llm)
         console.print("[green]✓[/green] LLM model is available and accessible\n")
 
+        # Read context override files if provided (once, reused for all repos)
+        org_context_content: Optional[str] = None
+        repo_context_content: Optional[str] = None
+
+        if org_context:
+            org_context_content = Path(org_context).read_text(encoding="utf-8")
+            console.print(f"[cyan]Using org context:[/cyan] {org_context}\n")
+
+        if repo_context:
+            repo_context_content = Path(repo_context).read_text(encoding="utf-8")
+            console.print(f"[cyan]Using repo context:[/cyan] {repo_context}\n")
+
         # Determine source and fetch repositories
         if org:
             source = "organization"
@@ -294,8 +307,12 @@ def discover(
                 )
 
                 try:
-                    # Create initial state
-                    initial_state = RootRepoState(repo_root_url=repo_url)
+                    # Create initial state with context overrides if provided
+                    initial_state = RootRepoState(
+                        repo_root_url=repo_url,
+                        org_context_override=org_context_content,
+                        repo_context_override=repo_context_content,
+                    )
 
                     # Prepare config with model name if specified
                     config = {

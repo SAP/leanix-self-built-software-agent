@@ -69,6 +69,8 @@ class RootRepoState:
     self_built_software: List[SelfBuiltComponent] = field(default_factory=list)
     repo_type_evidence: Optional[str] = None
     discovery_context: Optional[DiscoveryContext] = None
+    org_context_override: Optional[str] = None
+    repo_context_override: Optional[str] = None
 
 
 # A mapping from root_repo_url -> RootRepo

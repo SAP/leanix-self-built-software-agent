@@ -54,6 +54,8 @@ def load_context_runnable(state: RootRepoState) -> RootRepoState:
     context = build_discovery_context(
         org_name=org_name,
         local_path=state.local_path,
+        org_context_override=state.org_context_override,
+        repo_context_override=state.repo_context_override,
     )
 
     # Attach to state
