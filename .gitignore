@@ -64,4 +64,5 @@ dmypy.json
 
 # Project specific
 sbs-ai-discovery.db
+.planning/
 
