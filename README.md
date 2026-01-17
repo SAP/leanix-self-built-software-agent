@@ -85,6 +85,13 @@ export OPENAI_API_KEY="sk-your-openai-api-key"
 export ANTHROPIC_API_KEY="your-anthropic-api-key"
 ```
 
+**Anthropic (Custom Hosting):**
+```bash
+export ANTHROPIC_BASE_URL="https://your-custom-anthropic-endpoint.com"
+export ANTHROPIC_AUTH_TOKEN="your-auth-token"
+```
+Uses `x-api-key` header for authentication.
+
 **Azure OpenAI:**
 ```bash
 export AZURE_OPENAI_API_KEY="your-azure-openai-api-key"
