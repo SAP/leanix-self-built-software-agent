@@ -22,6 +22,10 @@ def format_context_for_prompt(context: Optional[DiscoveryContext], max_chars: in
 
     merged = context.merged_context.strip()
 
+    # Return empty if content is whitespace only
+    if not merged:
+        return ""
+
     # Truncate if too long (protect against token bloat)
     if len(merged) > max_chars:
         merged = merged[:max_chars] + "\n... [context truncated]"
