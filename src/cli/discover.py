@@ -100,6 +100,16 @@ def signal_handler(signum, frame):
     metavar='MODEL_NAME',
     help='LLM model to use for discovery (e.g., gpt-4o, claude-sonnet, gpt-4o-mini)'
 )
+@click.option(
+    '--org-context',
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help='Path to organization context file (overrides ~/.sbs-discovery/{org}.md)'
+)
+@click.option(
+    '--repo-context',
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help='Path to repository context file (overrides .sbs-discovery.md in repo)'
+)
 @click.pass_context
 def discover(
     ctx: click.Context,
@@ -110,7 +120,9 @@ def discover(
     skip_archived: bool,
     limit: Optional[int],
     github_token: Optional[str],
-    llm: Optional[str]
+    llm: Optional[str],
+    org_context: Optional[str],
+    repo_context: Optional[str]
 ):
     """
     Discover self-built software in GitHub repositories.
