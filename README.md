@@ -139,6 +139,71 @@ sbs-ai-discovery discover --org myorg --output results.json
 sbs-ai-discovery discover --org myorg --limit 10
 ```
 
+### User-Provided Context
+
+Improve discovery accuracy by providing domain-specific context that the AI agents use during analysis. Context files help the AI understand your organization's naming conventions, tech stack choices, and team ownership patterns.
+
+#### How It Works
+
+The tool automatically looks for context files in two locations:
+
+| Scope | Location | Purpose |
+|-------|----------|---------|
+| **Organization** | `~/.sbs-discovery/{org}.md` | Shared patterns across all repos |
+| **Repository** | `.sbs-discovery.md` in repo root | Repo-specific overrides |
+
+When both exist, repository context extends and overrides organization context.
+
+#### Example Usage
+
+```bash
+# Auto-detect context files from standard locations
+sbs-ai-discovery discover --org myorg
+
+# Override organization context with a custom file
+sbs-ai-discovery discover --org myorg --org-context ./custom-org-context.md
+
+# Override repository context
+sbs-ai-discovery discover --repo owner/repo --repo-context ./my-context.md
+
+# Both overrides together
+sbs-ai-discovery discover --org myorg \
+  --org-context ./org.md \
+  --repo-context ./repo.md
+```
+
+#### What to Include in Context Files
+
+Focus on patterns the AI can't easily detect from code alone:
+
+- **Service Naming**: Your `{team}-{service}` naming patterns
+- **Tech Stack Hints**: Preferred frameworks, databases, infrastructure
+- **Team Ownership**: Which prefixes belong to which teams
+- **Deployment Indicators**: CI/CD patterns, container configurations
+- **Special Cases**: Monorepos, shared libraries, internal tools
+
+#### Quick Start
+
+Create an organization context file:
+
+```bash
+mkdir -p ~/.sbs-discovery
+cat > ~/.sbs-discovery/myorg.md << 'EOF'
+# MyOrg Discovery Context
+
+## Service Naming
+- Services follow pattern: `{team}-{service}-{type}`
+- Teams: platform, payments, users
+
+## Tech Stack
+- Backend: Python FastAPI, Go
+- Frontend: React TypeScript
+- Database: PostgreSQL, Redis
+EOF
+```
+
+For detailed format documentation and examples, see [docs/CONTEXT_FILES.md](docs/CONTEXT_FILES.md).
+
 ### Sync Command
 
 Synchronize discovery results with external systems:
