@@ -64,4 +64,8 @@ dmypy.json
 
 # Project specific
 sbs-ai-discovery.db
+.planning/
 
+# Test files
+leanix-context.md
+results.json

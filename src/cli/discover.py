@@ -2,6 +2,7 @@
 
 import signal
 import sys
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -100,6 +101,16 @@ def signal_handler(signum, frame):
     metavar='MODEL_NAME',
     help='LLM model to use for discovery (e.g., gpt-4o, claude-sonnet, gpt-4o-mini)'
 )
+@click.option(
+    '--org-context',
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help='Path to organization context file (overrides ~/.sbs-discovery/{org}.md)'
+)
+@click.option(
+    '--repo-context',
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help='Path to repository context file (overrides .sbs-discovery.md in repo)'
+)
 @click.pass_context
 def discover(
     ctx: click.Context,
@@ -110,7 +121,9 @@ def discover(
     skip_archived: bool,
     limit: Optional[int],
     github_token: Optional[str],
-    llm: Optional[str]
+    llm: Optional[str],
+    org_context: Optional[str],
+    repo_context: Optional[str]
 ):
     """
     Discover self-built software in GitHub repositories.
@@ -167,6 +180,18 @@ def discover(
         console.print("[cyan]Validating LLM availability...[/cyan]")
         validate_llm_model_availability(llm)
         console.print("[green]✓[/green] LLM model is available and accessible\n")
+
+        # Read context override files if provided (once, reused for all repos)
+        org_context_content: Optional[str] = None
+        repo_context_content: Optional[str] = None
+
+        if org_context:
+            org_context_content = Path(org_context).read_text(encoding="utf-8")
+            console.print(f"[cyan]Using org context:[/cyan] {org_context}\n")
+
+        if repo_context:
+            repo_context_content = Path(repo_context).read_text(encoding="utf-8")
+            console.print(f"[cyan]Using repo context:[/cyan] {repo_context}\n")
 
         # Determine source and fetch repositories
         if org:
@@ -282,8 +307,12 @@ def discover(
                 )
 
                 try:
-                    # Create initial state
-                    initial_state = RootRepoState(repo_root_url=repo_url)
+                    # Create initial state with context overrides if provided
+                    initial_state = RootRepoState(
+                        repo_root_url=repo_url,
+                        org_context_override=org_context_content,
+                        repo_context_override=repo_context_content,
+                    )
 
                     # Prepare config with model name if specified
                     config = {
@@ -331,6 +360,14 @@ def discover(
                                 total_tech_stacks += len(component.tech_stacks)
                     else:
                         stats['non_deployable'] += 1
+
+                    # Display context info if loaded
+                    if pred_state.discovery_context:
+                        ctx = pred_state.discovery_context
+                        if ctx.org_context_path:
+                            console.print(f"  [dim]Org context:[/dim] {ctx.org_context_path}")
+                        if ctx.repo_context_path:
+                            console.print(f"  [dim]Repo context:[/dim] {ctx.repo_context_path}")
 
                     # Display status
                     format_repo_status(repo_url, pred_state)

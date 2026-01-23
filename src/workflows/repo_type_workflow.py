@@ -12,6 +12,7 @@ from src.nodes.router.routers import route_on_repo_type, route_on_deployable
 from src.nodes.runnables.classify_repo_type_runnable import classify_repo_type_runnable
 from src.nodes.runnables.clone_repo_runnable import clone_repo_tool_runnable
 from src.nodes.runnables.delete_repo_runnable import delete_repo_runnable
+from src.nodes.runnables.load_context_runnable import load_context_runnable
 from src.nodes.runnables.detect_deployment_signals_runnable import deployment_signals_detection_runnable
 from src.nodes.runnables.sbs_name_discovery_runnable import sbs_name_discovery_runnable
 from src.nodes.runnables.single_purpose_repo_runnable import single_purpose_repo_inspector_runnable
@@ -35,12 +36,16 @@ def generate_repo_type_workflow() -> CompiledStateGraph:
     graph.add_node("delete_repo_runnable", delete_repo_runnable)
     graph.add_node("individual_contributors_service_agent", individual_contributors_service_agent)
     graph.add_node("detect_tech_stack_runnable", detect_tech_stack_runnable)
+    graph.add_node("load_context_runnable", load_context_runnable)
 
     # Set the starting node
     graph.set_entry_point("clone_repo_tool_runnable")
 
-    # After cloning, detect deployment signals
-    graph.add_edge("clone_repo_tool_runnable", "deployment_signals_detection_runnable")
+    # After cloning, load user-provided discovery context
+    graph.add_edge("clone_repo_tool_runnable", "load_context_runnable")
+
+    # After loading context, detect deployment signals
+    graph.add_edge("load_context_runnable", "deployment_signals_detection_runnable")
 
     # Route based on deployable status - if deployable continue to classify repo type, otherwise end
     graph.add_conditional_edges(

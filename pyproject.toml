@@ -42,4 +42,6 @@ package = true
 [dependency-groups]
 dev = [
     "ipython>=9.4.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
 ]

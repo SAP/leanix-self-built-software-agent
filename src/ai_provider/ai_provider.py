@@ -25,6 +25,26 @@ def _init_anthropic_llm(model_name: str) -> Any:
         raise ImportError("langchain_anthropic is required for Anthropic provider") from e
 
 
+def _init_anthropic_custom_llm(model_name: str) -> Any:
+    """Initialize Anthropic LLM with custom base URL and auth token."""
+    try:
+        from langchain_anthropic import ChatAnthropic
+
+        base_url = os.getenv("ANTHROPIC_BASE_URL")
+        auth_token = os.getenv("ANTHROPIC_AUTH_TOKEN")
+
+        logger.info(f"Initializing Anthropic LLM (custom hosting) with model: {model_name}")
+        logger.info(f"Using base URL: {base_url}")
+
+        return ChatAnthropic(
+            model_name=model_name,
+            base_url=base_url,
+            default_headers={"x-api-key": auth_token},
+        )
+    except ImportError as e:
+        raise ImportError("langchain_anthropic is required for Anthropic provider") from e
+
+
 def _init_sap_aicore_llm(model_name: str) -> Any:
     """Initialize SAP AI Core LLM."""
     try:
@@ -70,6 +90,10 @@ def init_llm_by_provider(model_name: Optional[str] = None) -> Any:
         provider = _init_openai_llm
         provider_name = "openai"
         default_model = "gpt-4o"
+    elif os.getenv("ANTHROPIC_BASE_URL") and os.getenv("ANTHROPIC_AUTH_TOKEN"):
+        provider = _init_anthropic_custom_llm
+        provider_name = "anthropic-custom"
+        default_model = "claude-3-5-sonnet-20241022"
     elif os.getenv("ANTHROPIC_API_KEY"):
         provider = _init_anthropic_llm
         provider_name = "anthropic"
@@ -85,7 +109,8 @@ def init_llm_by_provider(model_name: Optional[str] = None) -> Any:
     else:
         raise ValueError(
             "No LLM provider configured. Please set one of: "
-            "OPENAI_API_KEY, ANTHROPIC_API_KEY, AICORE_CLIENT_ID, or AZURE_OPENAI_API_KEY"
+            "OPENAI_API_KEY, ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL+ANTHROPIC_AUTH_TOKEN, "
+            "AICORE_CLIENT_ID, or AZURE_OPENAI_API_KEY"
         )
 
     # Determine which model to use (priority: parameter > env var > default)
