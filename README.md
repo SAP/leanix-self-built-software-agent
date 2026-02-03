@@ -1,4 +1,3 @@
-
 ![](docs/capture.gif)
 
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/leanix-self-built-software-agent)](https://api.reuse.software/info/github.com/SAP/leanix-self-built-software-agent)
@@ -55,7 +54,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone and setup
 git clone https://github.com/SAP/leanix-self-built-software-agent.git
-cd sbs-ai-discovery
+cd leanix-self-built-software-agent
 uv venv && uv sync
 source .venv/bin/activate
 ```
@@ -68,7 +67,7 @@ brew install uv
 
 # Clone and setup
 git clone https://github.com/SAP/leanix-self-built-software-agent.git
-cd sbs-ai-discovery
+cd leanix-self-built-software-agent
 uv venv && uv sync
 source .venv/bin/activate
 ```
@@ -101,48 +100,48 @@ Set **one** LLM provider:
 
 **OpenAI:**
 ```bash
-export OPENAI_API_KEY=\"sk-your-openai-api-key\"
+export OPENAI_API_KEY="sk-your-openai-api-key"
 ```
 
 **Anthropic:**
 ```bash
-export ANTHROPIC_API_KEY=\"your-anthropic-api-key\"
+export ANTHROPIC_API_KEY="your-anthropic-api-key"
 ```
 
 **Anthropic (Custom Hosting):**
 ```bash
-export ANTHROPIC_BASE_URL=\"https://your-custom-anthropic-endpoint.com\"
-export ANTHROPIC_AUTH_TOKEN=\"your-auth-token\"
+export ANTHROPIC_BASE_URL="https://your-custom-anthropic-endpoint.com"
+export ANTHROPIC_AUTH_TOKEN="your-auth-token"
 ```
 Uses `x-api-key` header for authentication.
 
 **Azure OpenAI:**
 ```bash
-export AZURE_OPENAI_API_KEY=\"your-azure-openai-api-key\"
-export AZURE_OPENAI_ENDPOINT=\"https://your-resource.openai.azure.com/\"
-export OPENAI_API_VERSION=\"2023-12-01-preview\"
+export AZURE_OPENAI_API_KEY="your-azure-openai-api-key"
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+export OPENAI_API_VERSION="2023-12-01-preview"
 ```
 
 **SAP AI Core:**
 ```bash
-export AICORE_CLIENT_ID=\"sb-your-client-id\"
-export AICORE_CLIENT_SECRET=\"your-client-secret\"
-export AICORE_AUTH_URL=\"https://your-auth-url.authentication.sap.hana.ondemand.com\"
-export AICORE_BASE_URL=\"https://api.ai.your-region.aws.ml.hana.ondemand.com\"
-export AICORE_RESOURCE_GROUP=\"your-resource-group\"
+export AICORE_CLIENT_ID="sb-your-client-id"
+export AICORE_CLIENT_SECRET="your-client-secret"
+export AICORE_AUTH_URL="https://your-auth-url.authentication.sap.hana.ondemand.com"
+export AICORE_BASE_URL="https://api.ai.your-region.aws.ml.hana.ondemand.com"
+export AICORE_RESOURCE_GROUP="your-resource-group"
 ```
 
 **GitHub Integration:**
 ```bash
-export GITHUB_TOKEN=\"ghp_your-github-token\"
-export GITHUB_ORG=\"your-organization\"
+export GITHUB_TOKEN="ghp_your-github-token"
+export GITHUB_ORG="your-organization"
 ```
 
 **Database (optional - defaults to SQLite):**
 ```bash
-export DATABASE_URL=\"sqlite:///./ai_discovery.db\"
+export DATABASE_URL="sqlite:///./ai_discovery.db"
 # Or for PostgreSQL:
-# export DATABASE_URL=\"postgresql://user:password@localhost:5432/database\"
+# export DATABASE_URL="postgresql://user:password@localhost:5432/database"
 ```
 
 ### Discover Repositories
@@ -275,7 +274,7 @@ The CLI supports various output options:
 SQLite is used by default with no additional configuration:
 
 ```bash
-export DATABASE_URL=\"sqlite:///./ai_discovery.db\"
+export DATABASE_URL="sqlite:///./ai_discovery.db"
 ```
 
 ### PostgreSQL (Production)
@@ -285,7 +284,7 @@ For production deployments, use PostgreSQL:
 ```bash
 # Using Docker Compose
 docker-compose up -d database
-export DATABASE_URL=\"postgresql://sbs-ai-discovery-user:sbs-ai-discovery-password@localhost:5433/sbs-ai-discovery-db\"
+export DATABASE_URL="postgresql://sbs-ai-discovery-user:sbs-ai-discovery-password@localhost:5433/sbs-ai-discovery-db"
 
 # Run migrations
 uv run alembic upgrade head
