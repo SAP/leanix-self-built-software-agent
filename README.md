@@ -2,7 +2,7 @@
 
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/leanix-self-built-software-agent)](https://api.reuse.software/info/github.com/SAP/leanix-self-built-software-agent)
 
-# leanix-self-built-software-agent
+# SAP LeanIX Self Built Software Agent
 
 ## About this project
 
@@ -53,8 +53,8 @@ Development is supported by SAP, and is released under the Apache-2.0 License.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone and setup
-git clone https://github.com/LeanIX/sbs-ai-discovery.git
-cd sbs-ai-discovery
+git clone https://github.com/SAP/leanix-self-built-software-agent.git
+cd leanix-self-built-software-agent
 uv venv && uv sync
 source .venv/bin/activate
 ```
@@ -66,8 +66,8 @@ source .venv/bin/activate
 brew install uv
 
 # Clone and setup
-git clone https://github.com/LeanIX/sbs-ai-discovery.git
-cd sbs-ai-discovery
+git clone https://github.com/SAP/leanix-self-built-software-agent.git
+cd leanix-self-built-software-agent
 uv venv && uv sync
 source .venv/bin/activate
 ```
