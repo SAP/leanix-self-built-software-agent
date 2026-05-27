@@ -16,21 +16,42 @@ class ConfidenceLevel(str, Enum):
     medium = "medium"
     low = "low"
 
+
 class Evidence(BaseModel):
-    path: str = Field(examples=["services/orders/build.gradle.kts"], description="Path to the file to be evidenced.")
-    snippet: str = Field(examples=["implementation(\"org.springframework.boot:spring-boot-starter-web:3.2.5\""],description="Snippet of the file to be evidenced.")
-    reason: str = Field(examples=["Dependency pin to Spring Boot starter"], description="Reason for the evidence.")
+    path: str = Field(
+        examples=["services/orders/build.gradle.kts"],
+        description="Path to the file to be evidenced.",
+    )
+    snippet: str = Field(
+        examples=[
+            'implementation("org.springframework.boot:spring-boot-starter-web:3.2.5"'
+        ],
+        description="Snippet of the file to be evidenced.",
+    )
+    reason: str = Field(
+        examples=["Dependency pin to Spring Boot starter"],
+        description="Reason for the evidence.",
+    )
+
 
 class TechStack(BaseModel):
     name: str = Field(description="Technology, framework, or library name")
     version: str = Field(description="Version of the technology, if available")
     evidence: List[Evidence] = Field(description="List of evidence objects")
-    confidence: ConfidenceLevel = Field(description="Confidence level in tech stack identification, based on the evidences found")
+    confidence: ConfidenceLevel = Field(
+        description="Confidence level in tech stack identification, based on the evidences found"
+    )
+
 
 class TechStackResult(BaseModel):
-    tech_stacks: List[TechStack] = Field(description="List of tech stacks with name and version")
+    tech_stacks: List[TechStack] = Field(
+        description="List of tech stacks with name and version"
+    )
 
-def tech_stack_agent(dependency_file_content: str, model_name: Optional[str] = None) -> TechStackResult:
+
+def tech_stack_agent(
+    dependency_file_content: str, model_name: Optional[str] = None
+) -> TechStackResult:
     """
     Analyze a dependency management file and return a list of tech stacks used, including name and version.
     """
@@ -105,7 +126,7 @@ def tech_stack_agent(dependency_file_content: str, model_name: Optional[str] = N
     prompt = PromptTemplate(
         template=prompt_text,
         input_variables=["dependency_file_content"],
-        partial_variables={"format_instructions": parser.get_format_instructions()}
+        partial_variables={"format_instructions": parser.get_format_instructions()},
     )
 
     chain = prompt | llm | parser

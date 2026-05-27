@@ -7,20 +7,33 @@ from langchain_core.runnables import RunnableConfig
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState, SelfBuiltComponent, Owner, ComponentType
 from src.logging.logging import get_logger
-from src.tools.discover_services_tool import discover_services_tool, repo_get_head_sha, repo_list_tree, repo_read_file, \
-    repo_search_code
+from src.tools.discover_services_tool import (
+    discover_services_tool,
+    repo_get_head_sha,
+    repo_list_tree,
+    repo_read_file,
+    repo_search_code,
+)
 from src.utils.context_injection import format_context_for_prompt
 
 logger = get_logger(__name__)
 
 
-def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
+def monorepo_inspector_agent(
+    state: RootRepoState, config: RunnableConfig
+) -> RootRepoState:
     logger.info("👀  extra checks for *mono-repo* – placeholder implementation")
 
     # Get model name from config if provided
     model_name = config.get("configurable", {}).get("model_name") if config else None
     llm = init_llm_by_provider(model_name)
-    tools = [discover_services_tool, repo_get_head_sha, repo_list_tree, repo_read_file, repo_search_code]
+    tools = [
+        discover_services_tool,
+        repo_get_head_sha,
+        repo_list_tree,
+        repo_read_file,
+        repo_search_code,
+    ]
     repo_root_url = state.repo_root_url
 
     # Get user-provided context for injection into prompt
@@ -117,11 +130,7 @@ def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> Ro
 
     react_prompt = hub.pull("hwchase17/react")
 
-    agent = create_react_agent(
-        tools=tools,
-        llm=llm,
-        prompt=react_prompt
-    )
+    agent = create_react_agent(tools=tools, llm=llm, prompt=react_prompt)
 
     agent_executor = AgentExecutor(
         agent=agent,
@@ -131,10 +140,7 @@ def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> Ro
         max_iterations=3,
     )
 
-    response = agent_executor.invoke(
-        {"input": prompt},
-        return_only_outputs=True
-    )
+    response = agent_executor.invoke({"input": prompt}, return_only_outputs=True)
 
     # Extract the JSON array returned by the LLM
     # Get the output from the response
@@ -144,8 +150,9 @@ def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> Ro
     # Extract and parse JSON from the response
     try:
         import re
+
         # Clean up output: remove everything before the first '[' and after the last ']'
-        array_match = re.search(r'\[.*?\]', services_str, re.DOTALL)
+        array_match = re.search(r"\[.*?\]", services_str, re.DOTALL)
         if array_match:
             json_array_str = array_match.group()
             services = json.loads(json_array_str)
@@ -158,7 +165,7 @@ def monorepo_inspector_agent(state: RootRepoState, config: RunnableConfig) -> Ro
                     display_url=f"{repo_root_url}{svc.get('path', '').strip()}",
                     owner=Owner(),
                     language=None,
-                    component_type=ComponentType.UNKNOWN
+                    component_type=ComponentType.UNKNOWN,
                 )
                 state.self_built_software.append(component)
         else:

@@ -2,9 +2,14 @@ from __future__ import annotations
 import uuid
 from typing import Mapping, Union, List
 from src.dto.state_dto import (
-    RootRepoState, SelfBuiltComponent, Owner, Individual,
-    RepoType, ComponentType,
+    RootRepoState,
+    SelfBuiltComponent,
+    Owner,
+    Individual,
+    RepoType,
+    ComponentType,
 )
+
 
 def coerce_state(resp: Union[RootRepoState, Mapping[str, object]]) -> RootRepoState:
     # Already typed
@@ -44,7 +49,7 @@ def coerce_state(resp: Union[RootRepoState, Mapping[str, object]]) -> RootRepoSt
         state.repo_type = None
 
     comps: List[SelfBuiltComponent] = []
-    for c in (d.get("self_built_software") or []):
+    for c in d.get("self_built_software") or []:
         if isinstance(c, SelfBuiltComponent):
             # normalize minimal fields
             if not c.display_url:

@@ -15,7 +15,6 @@ def delete_repo_runnable(state: RootRepoState) -> RootRepoState:
     logger.info(f"Deleting clone repo: {state.local_path}")
 
     try:
-
         shutil.rmtree(state.local_path)
 
         return state

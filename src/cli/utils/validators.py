@@ -32,7 +32,7 @@ def validate_github_token(token: Optional[str]) -> Optional[str]:
     Raises:
         ValueError: If no token is found
     """
-    github_token = token or os.getenv('GITHUB_TOKEN') or os.getenv('GH_TOKEN')
+    github_token = token or os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
 
     if not github_token:
         raise ValueError(
@@ -119,10 +119,10 @@ def validate_ai_provider() -> bool:
         ValueError: If no AI provider is configured
     """
     providers = {
-        'OpenAI': os.getenv('OPENAI_API_KEY'),
-        'Anthropic': os.getenv('ANTHROPIC_API_KEY'),
-        'Azure OpenAI': os.getenv('AZURE_OPENAI_API_KEY'),
-        'SAP AI Core': os.getenv('AICORE_CLIENT_ID'),
+        "OpenAI": os.getenv("OPENAI_API_KEY"),
+        "Anthropic": os.getenv("ANTHROPIC_API_KEY"),
+        "Azure OpenAI": os.getenv("AZURE_OPENAI_API_KEY"),
+        "SAP AI Core": os.getenv("AICORE_CLIENT_ID"),
     }
 
     configured = [name for name, key in providers.items() if key]
@@ -142,8 +142,7 @@ def validate_ai_provider() -> bool:
 
 
 def validate_leanix_credentials(
-    token: Optional[str] = None,
-    domain: Optional[str] = None
+    token: Optional[str] = None, domain: Optional[str] = None
 ) -> tuple[str, str]:
     """
     Validate that LeanIX credentials are available.
@@ -162,14 +161,14 @@ def validate_leanix_credentials(
     Raises:
         ValueError: If credentials are missing
     """
-    leanix_token = token or os.getenv('LEANIX_TOKEN')
-    leanix_domain = domain or os.getenv('LEANIX_DOMAIN')
+    leanix_token = token or os.getenv("LEANIX_TOKEN")
+    leanix_domain = domain or os.getenv("LEANIX_DOMAIN")
 
     missing = []
     if not leanix_token:
-        missing.append('LEANIX_TOKEN')
+        missing.append("LEANIX_TOKEN")
     if not leanix_domain:
-        missing.append('LEANIX_DOMAIN')
+        missing.append("LEANIX_DOMAIN")
 
     if missing:
         raise ValueError(
@@ -185,6 +184,7 @@ def validate_leanix_credentials(
         )
 
     return leanix_token, leanix_domain
+
 
 def validate_llm_model_availability(model: Optional[str]) -> bool:
     """

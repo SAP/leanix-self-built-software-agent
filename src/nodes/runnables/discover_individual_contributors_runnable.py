@@ -13,20 +13,27 @@ class Individual(TypedDict):
     commits: int
 
 
-def discover_individual_contributors_runnable(local_path: str, service_name: str, service_path: str) -> List[
-    Individual]:
+def discover_individual_contributors_runnable(
+    local_path: str, service_name: str, service_path: str
+) -> List[Individual]:
     """
     Get the contributors for a service
     """
     try:
-
         logger.info("Discovering individual contributors for service: %s", service_name)
         result = subprocess.run(
-            ["git", "shortlog", "HEAD", "-sne", "--", service_path if service_path != "" else "."],
+            [
+                "git",
+                "shortlog",
+                "HEAD",
+                "-sne",
+                "--",
+                service_path if service_path != "" else ".",
+            ],
             stdout=subprocess.PIPE,
             cwd=local_path,
             text=True,
-            timeout=60  # 1 minute timeout
+            timeout=60,  # 1 minute timeout
         )
         contributors: list[Individual] = []
         for line in result.stdout.strip().splitlines():
@@ -37,10 +44,9 @@ def discover_individual_contributors_runnable(local_path: str, service_name: str
                     continue
                 contributors.append(
                     Individual(
-                        name=name.strip(),
-                        email=email.strip(),
-                        commits=int(commits)
-                    ))
+                        name=name.strip(), email=email.strip(), commits=int(commits)
+                    )
+                )
         return contributors
 
     except subprocess.TimeoutExpired:

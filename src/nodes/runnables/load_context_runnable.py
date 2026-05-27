@@ -8,6 +8,7 @@ is populated. It discovers and loads context from:
 The loaded context is attached to state.discovery_context for use
 by downstream LLM agents.
 """
+
 from __future__ import annotations
 
 import re

@@ -1,4 +1,10 @@
-from src.dto.state_dto import RootRepoState, SelfBuiltComponent, Owner, ComponentType, RepoType
+from src.dto.state_dto import (
+    RootRepoState,
+    SelfBuiltComponent,
+    Owner,
+    ComponentType,
+    RepoType,
+)
 from src.logging.logging import get_logger
 from src.utils.url_helper import parse_github_url_to_repo_full_name
 
@@ -20,7 +26,7 @@ def single_purpose_repo_inspector_runnable(state: RootRepoState) -> RootRepoStat
         c.display_url = c.display_url or state.repo_root_url
         c.evidence = state.repo_type_evidence
         c.confidence = "high"
-        state.self_built_software[:] = [c]   # collapse to exactly one
+        state.self_built_software[:] = [c]  # collapse to exactly one
     else:
         state.self_built_software.append(
             SelfBuiltComponent(

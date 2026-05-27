@@ -9,6 +9,7 @@ def _init_openai_llm(model_name: str) -> Any:
     """Initialize OpenAI LLM."""
     try:
         from langchain_openai import ChatOpenAI
+
         logger.info(f"Initializing OpenAI LLM with model: {model_name}")
         return ChatOpenAI(model=model_name)
     except ImportError as e:
@@ -19,10 +20,13 @@ def _init_anthropic_llm(model_name: str) -> Any:
     """Initialize Anthropic LLM."""
     try:
         from langchain_anthropic import ChatAnthropic
+
         logger.info(f"Initializing Anthropic LLM with model: {model_name}")
         return ChatAnthropic(model_name=model_name)
     except ImportError as e:
-        raise ImportError("langchain_anthropic is required for Anthropic provider") from e
+        raise ImportError(
+            "langchain_anthropic is required for Anthropic provider"
+        ) from e
 
 
 def _init_anthropic_custom_llm(model_name: str) -> Any:
@@ -33,7 +37,9 @@ def _init_anthropic_custom_llm(model_name: str) -> Any:
         base_url = os.getenv("ANTHROPIC_BASE_URL")
         auth_token = os.getenv("ANTHROPIC_AUTH_TOKEN")
 
-        logger.info(f"Initializing Anthropic LLM (custom hosting) with model: {model_name}")
+        logger.info(
+            f"Initializing Anthropic LLM (custom hosting) with model: {model_name}"
+        )
         logger.info(f"Using base URL: {base_url}")
 
         return ChatAnthropic(
@@ -42,30 +48,38 @@ def _init_anthropic_custom_llm(model_name: str) -> Any:
             default_headers={"x-api-key": auth_token},
         )
     except ImportError as e:
-        raise ImportError("langchain_anthropic is required for Anthropic provider") from e
+        raise ImportError(
+            "langchain_anthropic is required for Anthropic provider"
+        ) from e
 
 
 def _init_sap_aicore_llm(model_name: str) -> Any:
     """Initialize SAP AI Core LLM."""
     try:
         from gen_ai_hub.proxy.langchain import init_llm
+
         logger.info(f"Initializing AI Core LLM with model: {model_name}")
         return init_llm(model_name)
     except ImportError as e:
         raise ImportError("gen_ai_hub is required for AI Core provider") from e
 
+
 def _init_azure_llm(model_name: str) -> Any:
     """Initialize Azure OpenAI LLM."""
     try:
         from langchain_openai import AzureChatOpenAI
+
         logger.info(f"Initializing Azure OpenAI LLM with model: {model_name}")
         return AzureChatOpenAI(
             azure_deployment=model_name,
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_version=os.getenv("OPENAI_API_VERSION", "2023-12-01-preview")
+            api_version=os.getenv("OPENAI_API_VERSION", "2023-12-01-preview"),
         )
     except ImportError as e:
-        raise ImportError("langchain_openai is required for Azure OpenAI provider") from e
+        raise ImportError(
+            "langchain_openai is required for Azure OpenAI provider"
+        ) from e
+
 
 def init_llm_by_provider(model_name: Optional[str] = None) -> Any:
     """
@@ -124,7 +138,9 @@ def init_llm_by_provider(model_name: Optional[str] = None) -> Any:
     return llm
 
 
-def validate_llm_availability(model_name: Optional[str] = None) -> tuple[bool, Optional[str]]:
+def validate_llm_availability(
+    model_name: Optional[str] = None,
+) -> tuple[bool, Optional[str]]:
     """
     Validate that the LLM model is actually available and accessible.
 
@@ -149,7 +165,7 @@ def validate_llm_availability(model_name: Optional[str] = None) -> tuple[bool, O
         logger.info("Testing LLM availability with a simple prompt...")
 
         # Use a very simple prompt to minimize cost and latency
-        test_response = llm.invoke("Hi")
+        llm.invoke("Hi")
 
         # If we got here, the model is available
         logger.info("LLM availability test passed")
@@ -160,14 +176,31 @@ def validate_llm_availability(model_name: Optional[str] = None) -> tuple[bool, O
         logger.error(f"LLM availability test failed: {error_message}")
 
         # Provide helpful error messages based on common issues
-        if "authentication" in error_message.lower() or "api key" in error_message.lower():
-            return (False, f"Authentication failed: {error_message}\n\nPlease check your API key is valid and has not expired.")
-        elif "not found" in error_message.lower() or "does not exist" in error_message.lower():
-            return (False, f"Model not found: {error_message}\n\nThe model may not be available in your account or region.")
+        if (
+            "authentication" in error_message.lower()
+            or "api key" in error_message.lower()
+        ):
+            return (
+                False,
+                f"Authentication failed: {error_message}\n\nPlease check your API key is valid and has not expired.",
+            )
+        elif (
+            "not found" in error_message.lower()
+            or "does not exist" in error_message.lower()
+        ):
+            return (
+                False,
+                f"Model not found: {error_message}\n\nThe model may not be available in your account or region.",
+            )
         elif "quota" in error_message.lower() or "rate limit" in error_message.lower():
-            return (False, f"Rate limit or quota exceeded: {error_message}\n\nPlease check your API usage limits.")
+            return (
+                False,
+                f"Rate limit or quota exceeded: {error_message}\n\nPlease check your API usage limits.",
+            )
         elif "permission" in error_message.lower() or "access" in error_message.lower():
-            return (False, f"Permission denied: {error_message}\n\nYou may not have access to this model.")
+            return (
+                False,
+                f"Permission denied: {error_message}\n\nYou may not have access to this model.",
+            )
         else:
             return (False, f"LLM validation failed: {error_message}")
-

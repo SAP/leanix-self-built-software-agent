@@ -11,17 +11,24 @@ from src.utils.url_helper import parse_github_url_to_repo_full_name
 logger = get_logger(__name__)
 
 BUILD_MANIFESTS = {
-    "package.json", "pyproject.toml", "setup.py", "pom.xml",
-    "go.mod", "Cargo.toml", "build.gradle", "build.gradle.kts",
+    "package.json",
+    "pyproject.toml",
+    "setup.py",
+    "pom.xml",
+    "go.mod",
+    "Cargo.toml",
+    "build.gradle",
+    "build.gradle.kts",
     "requirements.txt",
 }
 DOCKERFILE_NAMES = {"Dockerfile", "dockerfile"}
 
 RepoType = Literal["mono-repo", "single-purpose-repo"]
 
+
 class RepoClassification(TypedDict):
-    repo_root: str         # canonical GitHub repo URL
-    repo_type: RepoType    # the classification result
+    repo_root: str  # canonical GitHub repo URL
+    repo_type: RepoType  # the classification result
 
 
 @tool("classify_repo_type", return_direct=True)
@@ -75,8 +82,12 @@ def classify_repo_type_tool(repo_root_url: str) -> RepoClassification:
             docker_hits += 1
             per_dir_hits[top_dir] += 1
 
-    logger.info("📦 manifests=%s dockerfiles=%s dirs_with_hits=%s",
-                manifest_hits, docker_hits, len(per_dir_hits))
+    logger.info(
+        "📦 manifests=%s dockerfiles=%s dirs_with_hits=%s",
+        manifest_hits,
+        docker_hits,
+        len(per_dir_hits),
+    )
 
     # ── decide ────────────────────────────────────────────────
     repo_type: RepoType

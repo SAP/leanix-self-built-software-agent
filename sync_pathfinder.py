@@ -5,6 +5,7 @@ Can be used as:
 1. Standalone script: python sync_pathfinder.py
 2. Service module: from sync_pathfinder import initialize_leanix_client, sync_services, etc.
 """
+
 import requests
 import json
 import uuid
@@ -125,7 +126,13 @@ def initialize_leanix_client(token: str, domain: str) -> None:
     Raises:
         Exception: If authentication fails
     """
-    global _LEANIX_TOKEN, _LEANIX_DOMAIN, _GRAPHQL_ENDPOINT, _OAUTH_TOKEN_URL, _ACCESS_TOKEN, _HEADERS
+    global \
+        _LEANIX_TOKEN, \
+        _LEANIX_DOMAIN, \
+        _GRAPHQL_ENDPOINT, \
+        _OAUTH_TOKEN_URL, \
+        _ACCESS_TOKEN, \
+        _HEADERS
 
     _LEANIX_TOKEN = token
     _LEANIX_DOMAIN = domain
@@ -138,7 +145,7 @@ def initialize_leanix_client(token: str, domain: str) -> None:
     # Set headers
     _HEADERS = {
         "Authorization": f"Bearer {_ACCESS_TOKEN}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     logger.info(f"Initialized LeanIX client for domain: {domain}")
@@ -150,7 +157,7 @@ def _get_access_token() -> str:
         _OAUTH_TOKEN_URL,
         data={"grant_type": "client_credentials"},
         auth=requests.auth.HTTPBasicAuth("apitoken", _LEANIX_TOKEN),
-        timeout=30
+        timeout=30,
     )
     if response.status_code != 200:
         logger.error(f"Failed to get access token: {response.text}")
@@ -164,7 +171,7 @@ def graphql_request(query: str, variables: Dict[str, Any]) -> Optional[Dict[str,
         _GRAPHQL_ENDPOINT,
         json={"query": query, "variables": variables},
         headers=_HEADERS,
-        timeout=30
+        timeout=30,
     )
     if response.status_code != 200 or "errors" in response.json():
         return None
@@ -183,10 +190,10 @@ def get_discovery_data(repo_filter: Optional[str] = None) -> List[Dict[str, Any]
     """
     services = []
     with get_session() as session:
-        query = session.query(AiDiscoveryData, FactSheet, Repository).join(
-            FactSheet, AiDiscoveryData.fact_sheet_id == FactSheet.fact_sheet_id
-        ).join(
-            Repository, FactSheet.repository_id == Repository.id
+        query = (
+            session.query(AiDiscoveryData, FactSheet, Repository)
+            .join(FactSheet, AiDiscoveryData.fact_sheet_id == FactSheet.fact_sheet_id)
+            .join(Repository, FactSheet.repository_id == Repository.id)
         )
 
         # Apply filter if specified
@@ -210,7 +217,11 @@ def get_discovery_data(repo_filter: Optional[str] = None) -> List[Dict[str, Any]
     return services
 
 
-def sync_services(services: List[Dict[str, Any]], dry_run: bool = False, progress_callback: Optional[Callable] = None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+def sync_services(
+    services: List[Dict[str, Any]],
+    dry_run: bool = False,
+    progress_callback: Optional[Callable] = None,
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Sync services to LeanIX Pathfinder.
 
@@ -229,7 +240,9 @@ def sync_services(services: List[Dict[str, Any]], dry_run: bool = False, progres
     for idx, service in enumerate(services):
         service_name = service["name"]
         repository_url = service.get("repository_url")
-        logger.debug(f"Processing service: {service_name}, repository_url: {repository_url}")
+        logger.debug(
+            f"Processing service: {service_name}, repository_url: {repository_url}"
+        )
 
         if dry_run:
             logger.info(f"[DRY RUN] Would sync service: {service_name}")
@@ -238,30 +251,29 @@ def sync_services(services: List[Dict[str, Any]], dry_run: bool = False, progres
             updated_services.append(service)
             continue
 
-        result = graphql_request(GET_FACTSHEET_QUERY, {"name": service_name, "factSheetType": "Application"})
+        result = graphql_request(
+            GET_FACTSHEET_QUERY, {"name": service_name, "factSheetType": "Application"}
+        )
         edges = result.get("allFactSheets", {}).get("edges", []) if result else []
 
         if not edges:
-            logger.info(f"FactSheet not found for service '{service_name}', creating new FactSheet.")
+            logger.info(
+                f"FactSheet not found for service '{service_name}', creating new FactSheet."
+            )
             variables = {
-                "input": {
-                    "name": service_name,
-                    "type": "Application"
-                },
+                "input": {"name": service_name, "type": "Application"},
                 "patches": [
-                    {
-                        "op": "add",
-                        "path": "/category",
-                        "value": "microservice"
-                    }
-                ]
+                    {"op": "add", "path": "/category", "value": "microservice"}
+                ],
             }
             create_result = graphql_request(CREATE_FACTSHEET_MUTATION, variables)
             if create_result and create_result.get("createFactSheet"):
                 fact_sheet_id = create_result["createFactSheet"]["factSheet"]["id"]
                 service["factsSheetId"] = fact_sheet_id
                 summary["created"] += 1
-                logger.info(f"Created FactSheet for service '{service_name}' with id '{fact_sheet_id}'.")
+                logger.info(
+                    f"Created FactSheet for service '{service_name}' with id '{fact_sheet_id}'."
+                )
             else:
                 service["factsSheetId"] = None
                 summary["failed"] += 1
@@ -270,26 +282,35 @@ def sync_services(services: List[Dict[str, Any]], dry_run: bool = False, progres
         else:
             fact_sheet_id = edges[0]["node"]["id"]
             service["factsSheetId"] = fact_sheet_id
-            logger.info(f"Found existing FactSheet for service '{service_name}' with id '{fact_sheet_id}'.")
+            logger.info(
+                f"Found existing FactSheet for service '{service_name}' with id '{fact_sheet_id}'."
+            )
             if repository_url:
-                patches = [{
-                    "op": "replace",
-                    "path": "/lxRepositoryUrl",
-                    "value": repository_url
-                }]
+                patches = [
+                    {
+                        "op": "replace",
+                        "path": "/lxRepositoryUrl",
+                        "value": repository_url,
+                    }
+                ]
                 update_result = graphql_request(
-                    UPDATE_SERVICE_MUTATION,
-                    {"id": fact_sheet_id, "patches": patches}
+                    UPDATE_SERVICE_MUTATION, {"id": fact_sheet_id, "patches": patches}
                 )
                 if update_result and update_result.get("updateFactSheet"):
                     summary["updated"] += 1
                     logger.info(f"Updated repository URL for service '{service_name}'.")
                 else:
                     summary["failed"] += 1
-                    error_msg = f"Failed to update repository URL for service '{service_name}'"
-                    summary["errors"].append({"service": service_name, "error": error_msg})
+                    error_msg = (
+                        f"Failed to update repository URL for service '{service_name}'"
+                    )
+                    summary["errors"].append(
+                        {"service": service_name, "error": error_msg}
+                    )
             else:
-                logger.info(f"Missing repository_url, skipping update for service: {service_name}")
+                logger.info(
+                    f"Missing repository_url, skipping update for service: {service_name}"
+                )
 
         updated_services.append(service)
 
@@ -301,7 +322,11 @@ def sync_services(services: List[Dict[str, Any]], dry_run: bool = False, progres
     return updated_services, summary
 
 
-def sync_tech_stacks(services: List[Dict[str, Any]], dry_run: bool = False, progress_callback: Optional[Callable] = None) -> Dict[str, Any]:
+def sync_tech_stacks(
+    services: List[Dict[str, Any]],
+    dry_run: bool = False,
+    progress_callback: Optional[Callable] = None,
+) -> Dict[str, Any]:
     """
     Sync tech stacks to LeanIX and link them to services.
 
@@ -324,89 +349,130 @@ def sync_tech_stacks(services: List[Dict[str, Any]], dry_run: bool = False, prog
         app_id = service.get("factsSheetId")
         service_name = service.get("name")
         if not app_id:
-            logger.warning(f"Service '{service_name}' missing factsSheetId, skipping techstack sync.")
+            logger.warning(
+                f"Service '{service_name}' missing factsSheetId, skipping techstack sync."
+            )
             continue
 
         for techstack in service.get("tech_stacks", []):
-            techstack_name = techstack.get("name") if isinstance(techstack, dict) else str(techstack)
+            techstack_name = (
+                techstack.get("name") if isinstance(techstack, dict) else str(techstack)
+            )
             if not techstack_name:
                 logger.warning("Techstack entry missing name, skipping.")
                 continue
 
-            logger.debug(f"Processing techstack '{techstack_name}' for service '{service_name}'")
+            logger.debug(
+                f"Processing techstack '{techstack_name}' for service '{service_name}'"
+            )
 
             if dry_run:
-                logger.info(f"[DRY RUN] Would link techstack '{techstack_name}' to service '{service_name}'")
+                logger.info(
+                    f"[DRY RUN] Would link techstack '{techstack_name}' to service '{service_name}'"
+                )
                 summary["linked"] += 1
                 continue
 
             # Use techstack_name as the cache key
             if techstack_name in techstack_cache:
                 itcomp_id = techstack_cache[techstack_name]
-                logger.debug(f"Found techstack '{techstack_name}' in cache with id '{itcomp_id}'")
+                logger.debug(
+                    f"Found techstack '{techstack_name}' in cache with id '{itcomp_id}'"
+                )
             else:
-                logger.debug(f"Techstack '{techstack_name}' not in cache, querying LeanIX...")
-                result = graphql_request(GET_FACTSHEET_QUERY, {"name": techstack_name, "factSheetType": "ITComponent"})
-                edges = result.get("allFactSheets", {}).get("edges", []) if result else []
+                logger.debug(
+                    f"Techstack '{techstack_name}' not in cache, querying LeanIX..."
+                )
+                result = graphql_request(
+                    GET_FACTSHEET_QUERY,
+                    {"name": techstack_name, "factSheetType": "ITComponent"},
+                )
+                edges = (
+                    result.get("allFactSheets", {}).get("edges", []) if result else []
+                )
                 if edges:
                     itcomp_id = edges[0]["node"]["id"]
-                    logger.info(f"Found ITComponent FactSheet for techstack '{techstack_name}' with id '{itcomp_id}'")
+                    logger.info(
+                        f"Found ITComponent FactSheet for techstack '{techstack_name}' with id '{itcomp_id}'"
+                    )
                 else:
-                    logger.info(f"ITComponent FactSheet for techstack '{techstack_name}' not found, creating...")
+                    logger.info(
+                        f"ITComponent FactSheet for techstack '{techstack_name}' not found, creating..."
+                    )
                     variables = {
-                        "input": {
-                            "name": techstack_name,
-                            "type": "ITComponent"
-                        },
+                        "input": {"name": techstack_name, "type": "ITComponent"},
                         "patches": [
-                            {
-                                "op": "add",
-                                "path": "/category",
-                                "value": "software"
-                            }
-                        ]
+                            {"op": "add", "path": "/category", "value": "software"}
+                        ],
                     }
-                    create_result = graphql_request(CREATE_FACTSHEET_MUTATION, variables)
+                    create_result = graphql_request(
+                        CREATE_FACTSHEET_MUTATION, variables
+                    )
                     if create_result and create_result.get("createFactSheet"):
                         itcomp_id = create_result["createFactSheet"]["factSheet"]["id"]
                         summary["created"] += 1
-                        logger.info(f"Created ITComponent FactSheet for techstack '{techstack_name}' with id '{itcomp_id}'")
+                        logger.info(
+                            f"Created ITComponent FactSheet for techstack '{techstack_name}' with id '{itcomp_id}'"
+                        )
                     else:
                         summary["failed"] += 1
                         error_msg = f"Failed to create ITComponent FactSheet for techstack '{techstack_name}'"
-                        summary["errors"].append({"techstack": techstack_name, "service": service_name, "error": error_msg})
+                        summary["errors"].append(
+                            {
+                                "techstack": techstack_name,
+                                "service": service_name,
+                                "error": error_msg,
+                            }
+                        )
                         continue
                 techstack_cache[techstack_name] = itcomp_id
 
             # Create relation
-            logger.debug(f"Linking service '{service_name}' (id: {app_id}) to techstack '{techstack_name}' (id: {itcomp_id})")
-            patches = [{
-                "op": "add",
-                "path": f"/relApplicationToITComponent/new_{uuid.uuid4().hex}",
-                "value": json.dumps({"factSheetId": itcomp_id})
-            }]
+            logger.debug(
+                f"Linking service '{service_name}' (id: {app_id}) to techstack '{techstack_name}' (id: {itcomp_id})"
+            )
+            patches = [
+                {
+                    "op": "add",
+                    "path": f"/relApplicationToITComponent/new_{uuid.uuid4().hex}",
+                    "value": json.dumps({"factSheetId": itcomp_id}),
+                }
+            ]
             relation_result = graphql_request(
-                LINK_TECHSTACK_MUTATION,
-                {"id": app_id, "patches": patches}
+                LINK_TECHSTACK_MUTATION, {"id": app_id, "patches": patches}
             )
             if relation_result and relation_result.get("updateFactSheet"):
                 summary["linked"] += 1
-                logger.info(f"Linked service '{service_name}' to techstack '{techstack_name}'")
+                logger.info(
+                    f"Linked service '{service_name}' to techstack '{techstack_name}'"
+                )
             else:
                 summary["failed"] += 1
                 error_msg = f"Failed to link service '{service_name}' to techstack '{techstack_name}'"
-                summary["errors"].append({"techstack": techstack_name, "service": service_name, "error": error_msg})
+                summary["errors"].append(
+                    {
+                        "techstack": techstack_name,
+                        "service": service_name,
+                        "error": error_msg,
+                    }
+                )
 
             # Report progress
             current += 1
             if progress_callback:
-                progress_callback(current, total_stacks, f"{techstack_name} → {service_name}")
+                progress_callback(
+                    current, total_stacks, f"{techstack_name} → {service_name}"
+                )
 
     logger.info(f"Techstack sync summary: {summary}")
     return summary
 
 
-def sync_contributors(services: List[Dict[str, Any]], dry_run: bool = False, progress_callback: Optional[Callable] = None) -> Dict[str, Any]:
+def sync_contributors(
+    services: List[Dict[str, Any]],
+    dry_run: bool = False,
+    progress_callback: Optional[Callable] = None,
+) -> Dict[str, Any]:
     """
     Sync contributors to LeanIX as subscriptions.
 
@@ -429,7 +495,9 @@ def sync_contributors(services: List[Dict[str, Any]], dry_run: bool = False, pro
         service_name = service.get("name")
         contributors = service.get("contributors", [])
         if not fact_sheet_id:
-            logger.warning(f"Service '{service_name}' missing factsSheetId, skipping contributor sync.")
+            logger.warning(
+                f"Service '{service_name}' missing factsSheetId, skipping contributor sync."
+            )
             continue
 
         for contributor in contributors:
@@ -437,56 +505,78 @@ def sync_contributors(services: List[Dict[str, Any]], dry_run: bool = False, pro
             emails = contributor.get("emails", [])
             if not name or not emails:
                 summary["failed"] += 1
-                error_msg = f"Contributor entry missing name or emails"
-                summary["errors"].append({"contributor": contributor, "service": service_name, "error": error_msg})
+                error_msg = "Contributor entry missing name or emails"
+                summary["errors"].append(
+                    {
+                        "contributor": contributor,
+                        "service": service_name,
+                        "error": error_msg,
+                    }
+                )
                 continue
 
             email = emails[0]
 
             if dry_run:
-                logger.info(f"[DRY RUN] Would add contributor '{name}' ({email}) to service '{service_name}'")
+                logger.info(
+                    f"[DRY RUN] Would add contributor '{name}' ({email}) to service '{service_name}'"
+                )
                 summary["created"] += 1
                 continue
 
-            user_input = {
-                "email": email,
-                "firstName": name,
-                "lastName": ""
-            }
+            user_input = {"email": email, "firstName": name, "lastName": ""}
             variables = {
                 "factSheetId": fact_sheet_id,
                 "user": user_input,
-                "roles": [{}]
+                "roles": [{}],
             }
-            logger.debug(f"Creating subscription for contributor '{name}' ({email}) on service '{service_name}' (FactSheetId: {fact_sheet_id})")
+            logger.debug(
+                f"Creating subscription for contributor '{name}' ({email}) on service '{service_name}' (FactSheetId: {fact_sheet_id})"
+            )
             response = requests.post(
                 _GRAPHQL_ENDPOINT,
                 json={"query": CREATE_SUBSCRIPTION_MUTATION, "variables": variables},
                 headers=_HEADERS,
-                timeout=30
+                timeout=30,
             )
             result = response.json()
-            if response.status_code == 200 and result.get("data", {}).get("createSubscription"):
+            if response.status_code == 200 and result.get("data", {}).get(
+                "createSubscription"
+            ):
                 summary["created"] += 1
-                logger.info(f"Created subscription for '{name}' ({email}) on service '{service_name}'.")
+                logger.info(
+                    f"Created subscription for '{name}' ({email}) on service '{service_name}'."
+                )
             elif "errors" in result:
                 error_messages = [e.get("message", "") for e in result["errors"]]
                 if any("Subscription already exists" in msg for msg in error_messages):
                     summary["already_exists"] += 1
-                    logger.info(f"Subscription already exists for '{name}' ({email}) on service '{service_name}'.")
+                    logger.info(
+                        f"Subscription already exists for '{name}' ({email}) on service '{service_name}'."
+                    )
                 else:
                     summary["failed"] += 1
                     error_msg = f"Failed to create subscription for '{name}' ({email}): {', '.join(error_messages)}"
-                    summary["errors"].append({"contributor": name, "service": service_name, "error": error_msg})
+                    summary["errors"].append(
+                        {
+                            "contributor": name,
+                            "service": service_name,
+                            "error": error_msg,
+                        }
+                    )
             else:
                 summary["failed"] += 1
                 error_msg = f"Unexpected error for '{name}' ({email})"
-                summary["errors"].append({"contributor": name, "service": service_name, "error": error_msg})
+                summary["errors"].append(
+                    {"contributor": name, "service": service_name, "error": error_msg}
+                )
 
             # Report progress
             current += 1
             if progress_callback:
-                progress_callback(current, total_contributors, f"{name} → {service_name}")
+                progress_callback(
+                    current, total_contributors, f"{name} → {service_name}"
+                )
 
     logger.info(f"Contributor sync summary: {summary}")
     return summary

@@ -3,15 +3,14 @@
 Tests the filesystem-based context discovery and loading functionality.
 Uses tmp_path fixtures and monkeypatch to simulate filesystem conditions.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 from src.services.context_loader import (
-    ORG_CONTEXT_DIR,
     REPO_CONTEXT_FILENAME,
     load_org_context,
     load_repo_context,
@@ -82,7 +81,9 @@ class TestLoadOrgContext:
         org_file.write_text(SAMPLE_ORG_CONTEXT)
 
         with patch("src.services.context_loader.ORG_CONTEXT_DIR", org_dir):
-            with patch.object(Path, "read_text", side_effect=PermissionError("Access denied")):
+            with patch.object(
+                Path, "read_text", side_effect=PermissionError("Access denied")
+            ):
                 content, path = load_org_context("myorg")
 
         assert content is None
@@ -134,7 +135,9 @@ class TestLoadRepoContext:
         assert content is None
         assert path is None
 
-    def test_returns_none_none_when_repo_directory_missing(self, tmp_path: Path) -> None:
+    def test_returns_none_none_when_repo_directory_missing(
+        self, tmp_path: Path
+    ) -> None:
         """When the repo directory doesn't exist, returns (None, None)."""
         nonexistent_repo = tmp_path / "nonexistent-repo"
 
@@ -150,7 +153,9 @@ class TestLoadRepoContext:
         context_file = repo_dir / REPO_CONTEXT_FILENAME
         context_file.write_text(SAMPLE_REPO_CONTEXT)
 
-        with patch.object(Path, "read_text", side_effect=PermissionError("Access denied")):
+        with patch.object(
+            Path, "read_text", side_effect=PermissionError("Access denied")
+        ):
             content, path = load_repo_context(str(repo_dir))
 
         assert content is None

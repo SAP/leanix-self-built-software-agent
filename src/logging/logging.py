@@ -15,13 +15,15 @@ from src.config.config import DEFAULT_IS_LOCAL
 DEFAULT_LOG_FORMAT = "%(message)s"
 TIMESTAMP_FORMAT_ISO = "iso"
 
+
 # Custom processor to filter out non-error logs
 def filter_errors(_, __, event_dict):
-    print(event_dict.get("level") )
+    print(event_dict.get("level"))
     if event_dict.get("level") == "error":
         return event_dict
     else:
         return None
+
 
 def _create_structlog_processor_chain() -> list[Any]:
     """Create the structlog processor chain based on environment.
@@ -88,6 +90,7 @@ def _configure_stdlib_logging(log_level: int, handler: logging.Handler) -> None:
         logger.handlers = [handler]
         logger.propagate = False
 
+
 def should_use_pretty_format(is_local: bool, log_format_json: bool | None) -> bool:
     """Determine format based on IS_LOCAL and LOG_FORMAT_JSON override
 
@@ -101,6 +104,7 @@ def should_use_pretty_format(is_local: bool, log_format_json: bool | None) -> bo
     use_pretty_format = not log_format_json if log_format_json is not None else is_local
 
     return use_pretty_format
+
 
 def configure_structlog() -> None:
     """Configure structlog for the MCP server.
@@ -129,7 +133,11 @@ def configure_structlog() -> None:
         cache_logger_on_first_use=False,
     )
 
-    console_renderer = structlog.dev.ConsoleRenderer(colors=True) if use_pretty_format else structlog.processors.JSONRenderer()
+    console_renderer = (
+        structlog.dev.ConsoleRenderer(colors=True)
+        if use_pretty_format
+        else structlog.processors.JSONRenderer()
+    )
 
     # Configure stdlib logging with environment-aware formatter
     # ProcessorFormatter handles both structlog and stdlib (uvicorn) logs
@@ -162,6 +170,7 @@ def configure_structlog() -> None:
 
     # Configure standard library logging
     _configure_stdlib_logging(log_level, handler)
+
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     """Get a structured logger instance.

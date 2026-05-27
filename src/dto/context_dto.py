@@ -7,6 +7,7 @@ AI discovery accuracy. Context can be provided at two levels:
 
 Repository context extends/overrides organization context.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

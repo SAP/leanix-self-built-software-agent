@@ -8,7 +8,10 @@ from src.tools.classify_repo_type_tool import classify_repo_type_tool
 
 logger = get_logger(__name__)
 
-def repo_type_inspector_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
+
+def repo_type_inspector_agent(
+    state: RootRepoState, config: RunnableConfig
+) -> RootRepoState:
     """Takes repository data, and determines if a repository is a mono-repo or single-purpose-repo"""
 
     # Get model name from config if provided
@@ -23,23 +26,12 @@ def repo_type_inspector_agent(state: RootRepoState, config: RunnableConfig) -> R
         "`monorepo` or `single-purpose-service`.\n"
         "Use the classify_repo_type_tool tool then answer succinctly.\n"
     )
-    agent = initialize_agent(
-        tools=tools,
-        llm=llm,
-        verbose=True
-    )
+    agent = initialize_agent(tools=tools, llm=llm, verbose=True)
 
-    response = agent.invoke(
-        prompt,
-        return_only_outputs=True
-    )
+    response = agent.invoke(prompt, return_only_outputs=True)
 
     logger.info(response)
     state.repo_type = response["output"].get("repo_type", "").strip().lower()
-    state.repo_root_url = response["output"].get("repo_root",  state.repo_root_url)
+    state.repo_root_url = response["output"].get("repo_root", state.repo_root_url)
     logger.info("Returning " + state.repo_type)
     return state
-
-
-
-

@@ -14,9 +14,7 @@ logger = get_logger(__name__)
 
 
 def fetch_github_repos(
-    org_name: str,
-    github_token: str,
-    skip_archived: bool = True
+    org_name: str, github_token: str, skip_archived: bool = True
 ) -> List[Dict]:
     """
     Fetch all repositories for the specified GitHub organization.
@@ -55,7 +53,9 @@ def fetch_github_repos(
             # Handle rate limiting
             if response.status_code == 403 and "rate limit" in response.text.lower():
                 logger.warning("GitHub API rate limit reached, backing off...")
-                console.print(f"[yellow]Warning: GitHub API rate limit reached, waiting {backoff} seconds...[/yellow]")
+                console.print(
+                    f"[yellow]Warning: GitHub API rate limit reached, waiting {backoff} seconds...[/yellow]"
+                )
                 time.sleep(backoff)
                 backoff = min(backoff * 2, 60)
                 continue
@@ -68,7 +68,9 @@ def fetch_github_repos(
 
             # Filter out archived repos if requested
             if skip_archived:
-                filtered_repos = [repo for repo in data if not repo.get("archived", False)]
+                filtered_repos = [
+                    repo for repo in data if not repo.get("archived", False)
+                ]
                 repos.extend(filtered_repos)
             else:
                 repos.extend(data)
@@ -78,13 +80,17 @@ def fetch_github_repos(
 
         except requests.ConnectionError as e:
             logger.error(f"Connection error: {e}")
-            console.print(f"[yellow]Connection error, retrying in {backoff} seconds...[/yellow]")
+            console.print(
+                f"[yellow]Connection error, retrying in {backoff} seconds...[/yellow]"
+            )
             time.sleep(backoff)
             backoff = min(backoff * 2, 60)
         except requests.HTTPError as e:
             logger.error(f"HTTP error: {e}")
             if e.response.status_code == 404:
-                raise ValueError(f"Organization '{org_name}' not found or not accessible")
+                raise ValueError(
+                    f"Organization '{org_name}' not found or not accessible"
+                )
             raise
         except Exception as exc:
             logger.error(f"Unexpected error fetching repos: {str(exc)}")
@@ -108,7 +114,7 @@ def validate_repo_format(repo_str: str) -> bool:
         return False
 
     # GitHub username/org and repo name can contain alphanumeric, hyphens, underscores, and periods
-    pattern = r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$'
+    pattern = r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$"
     return bool(re.match(pattern, repo_str))
 
 
@@ -132,15 +138,11 @@ def parse_repo_string(repo_str: str) -> Tuple[str, str]:
             "Example: myorg/myrepo"
         )
 
-    owner, repo = repo_str.split('/', 1)
+    owner, repo = repo_str.split("/", 1)
     return owner, repo
 
 
-def fetch_single_repo(
-    owner: str,
-    repo: str,
-    github_token: str
-) -> Dict:
+def fetch_single_repo(owner: str, repo: str, github_token: str) -> Dict:
     """
     Fetch information for a single GitHub repository.
 

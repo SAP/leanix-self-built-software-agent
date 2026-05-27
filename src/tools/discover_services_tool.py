@@ -2,7 +2,7 @@ import base64
 import os
 from typing import List, TypedDict, Set, Dict, Optional
 
-from github import Github, GithubException, ContentFile
+from github import Github, GithubException, ContentFile, Repository
 from langchain_core.tools import tool
 
 from src.logging.logging import get_logger
@@ -12,39 +12,53 @@ logger = get_logger(__name__)
 
 # ---- Types -------------------------------------------------------------------
 
+
 class HeadSHAResult(TypedDict):
     sha: str
     default_branch: str
+
 
 class TreeEntry(TypedDict):
     path: str
     type: str  # "blob" | "tree"
     size: Optional[int]
 
+
 class TreeResult(TypedDict):
     entries: List[TreeEntry]
 
+
 class ReadFileResult(TypedDict):
-    content: str        # base64 or text
-    encoding: str       # "base64" | "text"
+    content: str  # base64 or text
+    encoding: str  # "base64" | "text"
     truncated: bool
     size: int
+
 
 class SearchMatch(TypedDict):
     path: str
 
+
 class SearchCodeResult(TypedDict):
     matches: List[SearchMatch]
+
 
 class Service(TypedDict):
     name: str
     path: str  # relative repo path, no leading slash
 
+
 # ---- Constants ---------------------------------------------------------------
 
 BUILD_MANIFESTS = {
-    "package.json", "pyproject.toml", "setup.py", "pom.xml",
-    "go.mod", "Cargo.toml", "build.gradle", "build.gradle.kts",
+    "package.json",
+    "pyproject.toml",
+    "setup.py",
+    "pom.xml",
+    "go.mod",
+    "Cargo.toml",
+    "build.gradle",
+    "build.gradle.kts",
     "requirements.txt",
 }
 DOCKERFILE_NAMES = {"Dockerfile", "dockerfile"}
@@ -56,19 +70,23 @@ _CURRENT: Dict[str, str] = {
     "head_sha": "",
 }
 
+
 def _gh_client() -> Github:
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN (or GH_TOKEN) not set.")
     return Github(token)
 
-def _ensure_repo() -> "Repository.Repository":
+
+def _ensure_repo() -> Repository.Repository:
     if not _CURRENT["repo_full_name"]:
         raise RuntimeError("Repository context missing. Call repo.get_head_sha first.")
     gh = _gh_client()
     return gh.get_repo(_CURRENT["repo_full_name"])
 
+
 # ---- Tools -------------------------------------------------------------------
+
 
 @tool("repo.get_head_sha")
 def repo_get_head_sha(repo_root_url: str) -> HeadSHAResult | Dict[str, str]:
@@ -93,12 +111,15 @@ def repo_get_head_sha(repo_root_url: str) -> HeadSHAResult | Dict[str, str]:
         sha = repo.get_branch(default_branch).commit.sha
         _CURRENT["repo_full_name"] = repo_full_name
         _CURRENT["head_sha"] = sha
-        logger.info("repo=%s default_branch=%s sha=%s", repo_full_name, default_branch, sha)
+        logger.info(
+            "repo=%s default_branch=%s sha=%s", repo_full_name, default_branch, sha
+        )
         return {"sha": sha, "default_branch": default_branch}
     except GithubException as exc:
         return {"error": "github_error", "message": f"{exc.status} {exc.data}"}
     except Exception as exc:
         return {"error": "unknown_error", "message": str(exc)}
+
 
 @tool("repo.list_tree")
 def repo_list_tree(sha: str, recursive: bool = True) -> TreeResult | Dict[str, str]:
@@ -115,15 +136,20 @@ def repo_list_tree(sha: str, recursive: bool = True) -> TreeResult | Dict[str, s
         entries: List[TreeEntry] = []
         for e in tree:
             # e.type is "blob" or "tree"
-            entries.append({"path": e.path, "type": e.type, "size": getattr(e, "size", None)})
+            entries.append(
+                {"path": e.path, "type": e.type, "size": getattr(e, "size", None)}
+            )
         return {"entries": entries}
     except GithubException as exc:
         return {"error": "github_error", "message": f"{exc.status} {exc.data}"}
     except Exception as exc:
         return {"error": "unknown_error", "message": str(exc)}
 
+
 @tool("repo.read_file")
-def repo_read_file(path: str, sha: str, max_bytes: int = 200_000) -> ReadFileResult | Dict[str, str]:
+def repo_read_file(
+    path: str, sha: str, max_bytes: int = 200_000
+) -> ReadFileResult | Dict[str, str]:
     """
     Read a single file at a specific ref (commit SHA).
     Returns base64 content by default; truncates if larger than max_bytes.
@@ -166,6 +192,7 @@ def repo_read_file(path: str, sha: str, max_bytes: int = 200_000) -> ReadFileRes
     except Exception as exc:
         return {"error": "unknown_error", "message": str(exc)}
 
+
 @tool("repo.search_code")
 def repo_search_code(query: str, limit: int = 50) -> SearchCodeResult | Dict[str, str]:
     """
@@ -175,7 +202,9 @@ def repo_search_code(query: str, limit: int = 50) -> SearchCodeResult | Dict[str
     try:
         repo_full_name = _CURRENT.get("repo_full_name")
         if not repo_full_name:
-            raise RuntimeError("Repository context missing. Call repo.get_head_sha first.")
+            raise RuntimeError(
+                "Repository context missing. Call repo.get_head_sha first."
+            )
         gh = _gh_client()
         # Force repo scoping
         q = f"{query} repo:{repo_full_name}"
@@ -192,6 +221,7 @@ def repo_search_code(query: str, limit: int = 50) -> SearchCodeResult | Dict[str
         return {"error": "github_error", "message": f"{exc.status} {exc.data}"}
     except Exception as exc:
         return {"error": "unknown_error", "message": str(exc)}
+
 
 # Your simple heuristic discoverer. API-only, no cloning.
 @tool("discover_services")

@@ -8,7 +8,9 @@ from pydantic import BaseModel, Field
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState, Individual
 from src.logging.logging import get_logger
-from src.nodes.runnables.discover_individual_contributors_runnable import discover_individual_contributors_runnable
+from src.nodes.runnables.discover_individual_contributors_runnable import (
+    discover_individual_contributors_runnable,
+)
 
 logger = get_logger(__name__)
 
@@ -23,7 +25,9 @@ class ListOfIndividuals(BaseModel):
     individuals: List[IndividualResult]
 
 
-def individual_contributors_service_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
+def individual_contributors_service_agent(
+    state: RootRepoState, config: RunnableConfig
+) -> RootRepoState:
     """Takes repository data, and find the individual contributors for each service on the repository"""
 
     # Get model name from config if provided
@@ -31,7 +35,9 @@ def individual_contributors_service_agent(state: RootRepoState, config: Runnable
     llm = init_llm_by_provider(model_name)
     parser = JsonOutputParser(pydantic_object=ListOfIndividuals)
     for service in state.self_built_software:
-        individuals_list = discover_individual_contributors_runnable(state.local_path, service.name, service.path)
+        individuals_list = discover_individual_contributors_runnable(
+            state.local_path, service.name, service.path
+        )
         prompt_text = """
         ## Role
         You are a repository individual contributors analyst. Your job is to analyze the contributors and merge the contributors.
@@ -57,7 +63,7 @@ def individual_contributors_service_agent(state: RootRepoState, config: Runnable
         prompt = PromptTemplate(
             template=prompt_text,
             input_variables=["individuals_list"],
-            partial_variables={"format_instructions": parser.get_format_instructions()}
+            partial_variables={"format_instructions": parser.get_format_instructions()},
         )
 
         chain = prompt | llm | parser
@@ -67,10 +73,12 @@ def individual_contributors_service_agent(state: RootRepoState, config: Runnable
             if not individual:
                 continue
             emails = individual.get("emails")
-            individuals.append(Individual(
-                name=individual["name"],
-                emails=emails if emails else [],
-            ))
+            individuals.append(
+                Individual(
+                    name=individual["name"],
+                    emails=emails if emails else [],
+                )
+            )
         service.owner.individuals = individuals
 
     return state

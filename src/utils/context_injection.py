@@ -1,11 +1,14 @@
 """Utility for injecting user-provided context into agent prompts."""
+
 from __future__ import annotations
 
 from typing import Optional
 from src.dto.context_dto import DiscoveryContext
 
 
-def format_context_for_prompt(context: Optional[DiscoveryContext], max_chars: int = 4000) -> str:
+def format_context_for_prompt(
+    context: Optional[DiscoveryContext], max_chars: int = 4000
+) -> str:
     """Format discovery context for injection into LLM prompts.
 
     Args:

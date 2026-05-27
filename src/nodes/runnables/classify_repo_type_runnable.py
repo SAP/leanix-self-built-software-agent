@@ -8,8 +8,14 @@ from src.logging.logging import get_logger
 logger = get_logger(__name__)
 
 BUILD_MANIFESTS = {
-    "package.json", "pyproject.toml", "setup.py", "pom.xml",
-    "go.mod", "Cargo.toml", "build.gradle", "build.gradle.kts",
+    "package.json",
+    "pyproject.toml",
+    "setup.py",
+    "pom.xml",
+    "go.mod",
+    "Cargo.toml",
+    "build.gradle",
+    "build.gradle.kts",
     "requirements.txt",
 }
 DOCKERFILE_NAMES = {"Dockerfile", "dockerfile"}
@@ -45,7 +51,7 @@ def classify_repo_type_runnable(state: RootRepoState) -> RootRepoState:
     # Walk through the repository directory
     for root, dirs, files in os.walk(state.local_path):
         # Skip .git directories and other hidden directories
-        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
 
         depth = get_depth(root, state.local_path)
 
@@ -57,7 +63,7 @@ def classify_repo_type_runnable(state: RootRepoState) -> RootRepoState:
 
         for filename in files:
             # Skip hidden files
-            if filename.startswith('.'):
+            if filename.startswith("."):
                 continue
 
             file_path = os.path.join(root, filename)
@@ -79,7 +85,9 @@ def classify_repo_type_runnable(state: RootRepoState) -> RootRepoState:
                 per_dir_hits[top_dir] += 1
                 logger.debug(f"Found Dockerfile: {file_path}")
 
-    logger.info(f"📦 manifests={manifest_hits} dockerfiles={docker_hits} dirs_with_hits={len(per_dir_hits)}")
+    logger.info(
+        f"📦 manifests={manifest_hits} dockerfiles={docker_hits} dirs_with_hits={len(per_dir_hits)}"
+    )
     logger.debug(f"Directories with hits: {dict(per_dir_hits)}")
 
     # Decide repo type based on weighted scoring system
@@ -108,7 +116,9 @@ def classify_repo_type_runnable(state: RootRepoState) -> RootRepoState:
     elif len(per_dir_hits) == 2:
         score += 1
 
-    logger.info(f"🏆 Calculated score: {score} (manifests: {manifest_hits}, dockerfiles: {docker_hits}, directories: {len(per_dir_hits)})")
+    logger.info(
+        f"🏆 Calculated score: {score} (manifests: {manifest_hits}, dockerfiles: {docker_hits}, directories: {len(per_dir_hits)})"
+    )
 
     repo_type: RepoType
     # Raise the threshold to be more conservative

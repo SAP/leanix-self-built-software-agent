@@ -55,61 +55,39 @@ def signal_handler(signum, frame):
     """Handle interrupt signal (Ctrl+C)."""
     global interrupted
     interrupted = True
-    console.print("\n[yellow]Interrupt received. Finishing current repository and stopping...[/yellow]")
+    console.print(
+        "\n[yellow]Interrupt received. Finishing current repository and stopping...[/yellow]"
+    )
 
 
 @click.command()
+@click.option("--org", type=str, help="GitHub organization name")
+@click.option("--repo", type=str, help="Repository in format OWNER/REPO")
+@click.option("--output", type=click.Path(), help="Save results to JSON file")
+@click.option("--dry-run", is_flag=True, help="Analyze without writing to database")
 @click.option(
-    '--org',
-    type=str,
-    help='GitHub organization name'
-)
-@click.option(
-    '--repo',
-    type=str,
-    help='Repository in format OWNER/REPO'
-)
-@click.option(
-    '--output',
-    type=click.Path(),
-    help='Save results to JSON file'
-)
-@click.option(
-    '--dry-run',
-    is_flag=True,
-    help='Analyze without writing to database'
-)
-@click.option(
-    '--skip-archived',
+    "--skip-archived",
     is_flag=True,
     default=True,
-    help='Skip archived repositories (default: True)'
+    help="Skip archived repositories (default: True)",
 )
+@click.option("--limit", type=int, help="Max number of repositories to process")
+@click.option("--github-token", type=str, help="Override GITHUB_TOKEN from environment")
 @click.option(
-    '--limit',
-    type=int,
-    help='Max number of repositories to process'
-)
-@click.option(
-    '--github-token',
+    "--llm",
     type=str,
-    help='Override GITHUB_TOKEN from environment'
+    metavar="MODEL_NAME",
+    help="LLM model to use for discovery (e.g., gpt-4o, claude-sonnet, gpt-4o-mini)",
 )
 @click.option(
-    '--llm',
-    type=str,
-    metavar='MODEL_NAME',
-    help='LLM model to use for discovery (e.g., gpt-4o, claude-sonnet, gpt-4o-mini)'
-)
-@click.option(
-    '--org-context',
+    "--org-context",
     type=click.Path(exists=True, dir_okay=False, readable=True),
-    help='Path to organization context file (overrides ~/.sbs-discovery/{org}.md)'
+    help="Path to organization context file (overrides ~/.sbs-discovery/{org}.md)",
 )
 @click.option(
-    '--repo-context',
+    "--repo-context",
     type=click.Path(exists=True, dir_okay=False, readable=True),
-    help='Path to repository context file (overrides .sbs-discovery.md in repo)'
+    help="Path to repository context file (overrides .sbs-discovery.md in repo)",
 )
 @click.pass_context
 def discover(
@@ -123,7 +101,7 @@ def discover(
     github_token: Optional[str],
     llm: Optional[str],
     org_context: Optional[str],
-    repo_context: Optional[str]
+    repo_context: Optional[str],
 ):
     """
     Discover self-built software in GitHub repositories.
@@ -170,7 +148,9 @@ def discover(
 
         # Display mode indicators
         if dry_run:
-            console.print("[yellow][DRY RUN MODE] - No data will be saved to database[/yellow]\n")
+            console.print(
+                "[yellow][DRY RUN MODE] - No data will be saved to database[/yellow]\n"
+            )
 
         # Display LLM model if specified
         if llm:
@@ -197,7 +177,9 @@ def discover(
         if org:
             source = "organization"
             source_name = org
-            console.print(f"[bold]Discovering repositories in organization:[/bold] {org}\n")
+            console.print(
+                f"[bold]Discovering repositories in organization:[/bold] {org}\n"
+            )
 
             # Create organization record
             if not dry_run:
@@ -214,7 +196,9 @@ def discover(
                 sys.exit(3)
 
             if not repos:
-                console.print(f"[yellow]No repositories found in organization '{org}'[/yellow]")
+                console.print(
+                    f"[yellow]No repositories found in organization '{org}'[/yellow]"
+                )
                 sys.exit(0)
 
             console.print(f"Found [cyan]{len(repos)}[/cyan] repositories")
@@ -222,7 +206,9 @@ def discover(
             # Apply limit if specified
             if limit and limit > 0:
                 repos = repos[:limit]
-                console.print(f"Processing first [cyan]{len(repos)}[/cyan] repositories (--limit {limit})\n")
+                console.print(
+                    f"Processing first [cyan]{len(repos)}[/cyan] repositories (--limit {limit})\n"
+                )
             else:
                 console.print()
 
@@ -233,9 +219,9 @@ def discover(
             # Validate and parse repository format
             if not validate_repo_format(repo):
                 console.print(
-                    f"[red]Error: Invalid repository format[/red]\n"
-                    f"Expected format: OWNER/REPO\n"
-                    f"Example: myorg/myrepo"
+                    "[red]Error: Invalid repository format[/red]\n"
+                    "Expected format: OWNER/REPO\n"
+                    "Example: myorg/myrepo"
                 )
                 sys.exit(5)
 
@@ -259,16 +245,16 @@ def discover(
 
         # Initialize statistics
         stats = {
-            'total_repositories': 0,
-            'deployable': 0,
-            'non_deployable': 0,
-            'mono_repos': 0,
-            'single_purpose_repos': 0,
-            'total_services': 0,
-            'unique_teams': 0,
-            'total_tech_stacks': 0,
-            'failed': 0,
-            'errors': []
+            "total_repositories": 0,
+            "deployable": 0,
+            "non_deployable": 0,
+            "mono_repos": 0,
+            "single_purpose_repos": 0,
+            "total_services": 0,
+            "unique_teams": 0,
+            "total_tech_stacks": 0,
+            "failed": 0,
+            "errors": [],
         }
 
         # Track unique teams and tech stacks
@@ -288,11 +274,10 @@ def discover(
             TaskProgressColumn(),
             TimeElapsedColumn(),
             console=console,
-            transient=False
+            transient=False,
         ) as progress:
             task = progress.add_task(
-                f"[cyan]Processing repositories...",
-                total=len(repos)
+                "[cyan]Processing repositories...", total=len(repos)
             )
 
             for idx, repo_data in enumerate(repos, 1):
@@ -300,10 +285,9 @@ def discover(
                     console.print("\n[yellow]Processing interrupted by user[/yellow]")
                     break
 
-                repo_url = repo_data.get('html_url')
+                repo_url = repo_data.get("html_url")
                 progress.update(
-                    task,
-                    description=f"[cyan]Processing [{idx}/{len(repos)}]..."
+                    task, description=f"[cyan]Processing [{idx}/{len(repos)}]..."
                 )
 
                 try:
@@ -315,11 +299,7 @@ def discover(
                     )
 
                     # Prepare config with model name if specified
-                    config = {
-                        "configurable": {
-                            "model_name": llm
-                        }
-                    } if llm else {}
+                    config = {"configurable": {"model_name": llm}} if llm else {}
 
                     # Invoke workflow
                     logger.info(f"Processing repository: {repo_url}")
@@ -333,17 +313,17 @@ def discover(
                         create_repository(pred_state)
 
                     # Update statistics
-                    stats['total_repositories'] += 1
+                    stats["total_repositories"] += 1
 
                     if pred_state.deployable:
-                        stats['deployable'] += 1
+                        stats["deployable"] += 1
 
                         if pred_state.repo_type == RepoType.MONO_REPO:
-                            stats['mono_repos'] += 1
+                            stats["mono_repos"] += 1
                         elif pred_state.repo_type == RepoType.SINGLE_PURPOSE_REPO:
-                            stats['single_purpose_repos'] += 1
+                            stats["single_purpose_repos"] += 1
 
-                        stats['total_services'] += len(pred_state.self_built_software)
+                        stats["total_services"] += len(pred_state.self_built_software)
 
                         # Collect team and tech stack data
                         for component in pred_state.self_built_software:
@@ -359,15 +339,19 @@ def discover(
                             if component.tech_stacks:
                                 total_tech_stacks += len(component.tech_stacks)
                     else:
-                        stats['non_deployable'] += 1
+                        stats["non_deployable"] += 1
 
                     # Display context info if loaded
                     if pred_state.discovery_context:
                         ctx = pred_state.discovery_context
                         if ctx.org_context_path:
-                            console.print(f"  [dim]Org context:[/dim] {ctx.org_context_path}")
+                            console.print(
+                                f"  [dim]Org context:[/dim] {ctx.org_context_path}"
+                            )
                         if ctx.repo_context_path:
-                            console.print(f"  [dim]Repo context:[/dim] {ctx.repo_context_path}")
+                            console.print(
+                                f"  [dim]Repo context:[/dim] {ctx.repo_context_path}"
+                            )
 
                     # Display status
                     format_repo_status(repo_url, pred_state)
@@ -380,26 +364,28 @@ def discover(
                     # Re-raise to be caught by outer handler
                     raise
                 except Exception as e:
-                    stats['failed'] += 1
-                    stats['errors'].append((repo_url, str(e)))
-                    logger.error(f"Error processing repository {repo_url}: {e}", exc_info=True)
+                    stats["failed"] += 1
+                    stats["errors"].append((repo_url, str(e)))
+                    logger.error(
+                        f"Error processing repository {repo_url}: {e}", exc_info=True
+                    )
                     format_repo_status(repo_url, None, str(e))
 
                 finally:
                     progress.update(task, advance=1)
 
         # Update final stats
-        stats['unique_teams'] = len(unique_teams)
-        stats['total_tech_stacks'] = total_tech_stacks
+        stats["unique_teams"] = len(unique_teams)
+        stats["total_tech_stacks"] = total_tech_stacks
 
         # Display summary
         console.print()
         console.print(format_summary_table(stats))
 
         # Show errors if any
-        if stats['errors']:
+        if stats["errors"]:
             console.print("\n[red]Errors encountered:[/red]")
-            for repo_url, error in stats['errors']:
+            for repo_url, error in stats["errors"]:
                 console.print(f"  [red]•[/red] {repo_url}: {error}")
 
         # Export to JSON if requested
@@ -411,7 +397,7 @@ def discover(
                     output_path=output,
                     source=source,
                     org_or_repo=source_name,
-                    version=ctx.obj.get('version', '0.1.0') if ctx.obj else '0.1.0'
+                    version=ctx.obj.get("version", "0.1.0") if ctx.obj else "0.1.0",
                 )
             except Exception as e:
                 console.print(f"[red]Failed to export results:[/red] {e}")
@@ -419,14 +405,16 @@ def discover(
 
         # Display completion message
         if dry_run:
-            console.print("\n[yellow]Dry run completed - no data was saved to database[/yellow]")
+            console.print(
+                "\n[yellow]Dry run completed - no data was saved to database[/yellow]"
+            )
         else:
-            console.print(f"\n[green]Discovery completed successfully[/green]")
+            console.print("\n[green]Discovery completed successfully[/green]")
 
         # Exit with appropriate code
         if interrupted:
             sys.exit(130)
-        elif stats['failed'] > 0:
+        elif stats["failed"] > 0:
             sys.exit(1)
         else:
             sys.exit(0)

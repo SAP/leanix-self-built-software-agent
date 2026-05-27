@@ -13,10 +13,12 @@ from src.logging.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class ConfidenceLevel(str, Enum):
     high = "high"
     medium = "medium"
     low = "low"
+
 
 class ServicesResult(BaseModel):
     path: str = Field(description="Directory path")
@@ -33,12 +35,13 @@ class ServicesResult(BaseModel):
 class ListOfServices(BaseModel):
     services: List[ServicesResult]
 
+
 def ai_service_discovery_agent(
     candidate_dirs: List[Dict],
     cicd_files: List[Dict],
     repo_path: str = ".",
     readme_lines: int = 20,
-    context_signals: Optional[List[str]] = None
+    context_signals: Optional[List[str]] = None,
 ) -> List[Dict]:
     """
     Use LLM to choose which candidate directories in a repo are actual deployable services.
@@ -117,28 +120,47 @@ def ai_service_discovery_agent(
     parser = JsonOutputParser(pydantic_object=ListOfServices)
     prompt = PromptTemplate(
         template=prompt_text,
-        input_variables=["dir_summary", "readme_lines", "readme_content", "context_signals_str", "cicd_summary"],
-        partial_variables={"format_instructions": parser.get_format_instructions()}
+        input_variables=[
+            "dir_summary",
+            "readme_lines",
+            "readme_content",
+            "context_signals_str",
+            "cicd_summary",
+        ],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
     )
 
     try:
         llm = init_llm_by_provider()
-        logger.debug(f"Prompt for LLM service discovery (truncated): {prompt_text[:700]}...")
-        chain = prompt | llm.with_retry(
-            exponential_jitter_params=ExponentialJitterParams(
-                initial=2, max=30
-            ),
-            stop_after_attempt = 5
-
-        ) | parser
-        response = chain.invoke({"dir_summary": dir_summary, "readme_lines" : readme_lines, "readme_content": readme_content, "context_signals_str" : context_signals_str, "cicd_summary": cicd_summary})
+        logger.debug(
+            f"Prompt for LLM service discovery (truncated): {prompt_text[:700]}..."
+        )
+        chain = (
+            prompt
+            | llm.with_retry(
+                exponential_jitter_params=ExponentialJitterParams(initial=2, max=30),
+                stop_after_attempt=5,
+            )
+            | parser
+        )
+        response = chain.invoke(
+            {
+                "dir_summary": dir_summary,
+                "readme_lines": readme_lines,
+                "readme_content": readme_content,
+                "context_signals_str": context_signals_str,
+                "cicd_summary": cicd_summary,
+            }
+        )
         # Accepts: '[{"path": "integration-core", "name": "integration-core", "language": "java"}, ...]'
         logger.info(f"Service discovery LLM output: {response}")
         try:
             discovered_services = response["services"]
             assert isinstance(discovered_services, list)
         except Exception as e:
-            logger.warning(f"Could not parse LLM response, defaulting to empty list. Error: {e}")
+            logger.warning(
+                f"Could not parse LLM response, defaulting to empty list. Error: {e}"
+            )
             discovered_services = []
         return discovered_services
     except Exception as e:

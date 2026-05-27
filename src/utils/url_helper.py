@@ -8,7 +8,7 @@ def extract_url(md_link: str) -> str:
     Converts `[text](https://foo.bar)` → `https://foo.bar`
     """
     m = re.search(r"\((https?://[^)]+)\)", md_link)
-    return m.group(1) if m else md_link        # fall back: return unchanged
+    return m.group(1) if m else md_link  # fall back: return unchanged
 
 
 def parse_github_url_to_repo_full_name(repo_url: str) -> Tuple[str, str]:
