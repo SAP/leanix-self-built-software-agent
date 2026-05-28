@@ -1,4 +1,5 @@
 """Sync command for syncing discovery data to external systems."""
+
 import sys
 from typing import Optional
 
@@ -22,7 +23,7 @@ configure_structlog()
 logger = get_logger(__name__)
 
 
-@click.group(name='sync')
+@click.group(name="sync")
 @click.pass_context
 def sync_group(ctx: click.Context) -> None:
     """
@@ -46,42 +47,20 @@ def sync_group(ctx: click.Context) -> None:
     pass
 
 
-@sync_group.command(name='pathfinder')
+@sync_group.command(name="pathfinder")
 @click.option(
-    '--repo',
-    type=str,
-    help='Sync only a specific repository (format: OWNER/REPO)'
+    "--repo", type=str, help="Sync only a specific repository (format: OWNER/REPO)"
 )
 @click.option(
-    '--dry-run',
-    is_flag=True,
-    help='Preview sync operations without making changes'
+    "--dry-run", is_flag=True, help="Preview sync operations without making changes"
 )
+@click.option("--leanix-token", type=str, help="Override LEANIX_TOKEN from environment")
 @click.option(
-    '--leanix-token',
-    type=str,
-    help='Override LEANIX_TOKEN from environment'
+    "--leanix-domain", type=str, help="Override LEANIX_DOMAIN from environment"
 )
-@click.option(
-    '--leanix-domain',
-    type=str,
-    help='Override LEANIX_DOMAIN from environment'
-)
-@click.option(
-    '--skip-services',
-    is_flag=True,
-    help='Skip syncing services'
-)
-@click.option(
-    '--skip-techstacks',
-    is_flag=True,
-    help='Skip syncing tech stacks'
-)
-@click.option(
-    '--skip-contributors',
-    is_flag=True,
-    help='Skip syncing contributors'
-)
+@click.option("--skip-services", is_flag=True, help="Skip syncing services")
+@click.option("--skip-techstacks", is_flag=True, help="Skip syncing tech stacks")
+@click.option("--skip-contributors", is_flag=True, help="Skip syncing contributors")
 @click.pass_context
 def sync_pathfinder(
     ctx: click.Context,
@@ -150,17 +129,23 @@ def sync_pathfinder(
 
         if not services:
             if repo:
-                console.print(f"[yellow]No services found for repository: {repo}[/yellow]")
+                console.print(
+                    f"[yellow]No services found for repository: {repo}[/yellow]"
+                )
             else:
                 console.print("[yellow]No services found in database[/yellow]")
-            console.print("\n[dim]Tip: Run 'sbs-ai-discovery discover' first to populate the database[/dim]")
+            console.print(
+                "\n[dim]Tip: Run 'sbs-ai-discovery discover' first to populate the database[/dim]"
+            )
             sys.exit(0)
 
         console.print(f"[green]✓[/green] Found {len(services)} service(s)\n")
 
         # Display mode indicator
         if dry_run:
-            console.print("[yellow][DRY RUN MODE] - No changes will be made to LeanIX[/yellow]\n")
+            console.print(
+                "[yellow][DRY RUN MODE] - No changes will be made to LeanIX[/yellow]\n"
+            )
 
         # Display what will be synced
         console.print("[bold]Sync Plan:[/bold]")
@@ -169,15 +154,15 @@ def sync_pathfinder(
         plan_table.add_column("Action")
         plan_table.add_row(
             "Services",
-            "[yellow]Skip[/yellow]" if skip_services else "[green]Sync[/green]"
+            "[yellow]Skip[/yellow]" if skip_services else "[green]Sync[/green]",
         )
         plan_table.add_row(
             "Tech Stacks",
-            "[yellow]Skip[/yellow]" if skip_techstacks else "[green]Sync[/green]"
+            "[yellow]Skip[/yellow]" if skip_techstacks else "[green]Sync[/green]",
         )
         plan_table.add_row(
             "Contributors",
-            "[yellow]Skip[/yellow]" if skip_contributors else "[green]Sync[/green]"
+            "[yellow]Skip[/yellow]" if skip_contributors else "[green]Sync[/green]",
         )
         console.print(plan_table)
         console.print()
@@ -198,24 +183,36 @@ def sync_pathfinder(
                     TaskProgressColumn(),
                     TimeElapsedColumn(),
                     console=console,
-                    transient=False
+                    transient=False,
                 ) as progress:
-                    task = progress.add_task("[cyan]Syncing services...", total=len(services))
+                    task = progress.add_task(
+                        "[cyan]Syncing services...", total=len(services)
+                    )
 
                     def update_progress(current, total, name):
-                        progress.update(task, completed=current, description=f"[cyan]Syncing services [{current}/{total}]: {name}")
+                        progress.update(
+                            task,
+                            completed=current,
+                            description=f"[cyan]Syncing services [{current}/{total}]: {name}",
+                        )
 
-                    updated_services, service_summary = sync_services(services, dry_run, progress_callback=update_progress)
+                    updated_services, service_summary = sync_services(
+                        services, dry_run, progress_callback=update_progress
+                    )
 
-                console.print(f"  [green]✓[/green] Created: {service_summary['created']}")
-                console.print(f"  [green]✓[/green] Updated: {service_summary['updated']}")
-                if service_summary['failed'] > 0:
+                console.print(
+                    f"  [green]✓[/green] Created: {service_summary['created']}"
+                )
+                console.print(
+                    f"  [green]✓[/green] Updated: {service_summary['updated']}"
+                )
+                if service_summary["failed"] > 0:
                     console.print(f"  [red]✗[/red] Failed: {service_summary['failed']}")
 
                 # Display errors if any
-                if service_summary.get('errors'):
+                if service_summary.get("errors"):
                     console.print("\n  [red]Errors:[/red]")
-                    for error in service_summary['errors']:
+                    for error in service_summary["errors"]:
                         console.print(f"    • {error['service']}: {error['error']}")
 
                 console.print()
@@ -232,7 +229,9 @@ def sync_pathfinder(
             console.print("[bold]Syncing Tech Stacks...[/bold]")
             try:
                 # Calculate total tech stacks
-                total_stacks = sum(len(s.get("tech_stacks", [])) for s in updated_services)
+                total_stacks = sum(
+                    len(s.get("tech_stacks", [])) for s in updated_services
+                )
 
                 with Progress(
                     SpinnerColumn(),
@@ -241,25 +240,41 @@ def sync_pathfinder(
                     TaskProgressColumn(),
                     TimeElapsedColumn(),
                     console=console,
-                    transient=False
+                    transient=False,
                 ) as progress:
-                    task = progress.add_task("[cyan]Syncing tech stacks...", total=total_stacks)
+                    task = progress.add_task(
+                        "[cyan]Syncing tech stacks...", total=total_stacks
+                    )
 
                     def update_progress(current, total, name):
-                        progress.update(task, completed=current, description=f"[cyan]Syncing tech stacks [{current}/{total}]: {name}")
+                        progress.update(
+                            task,
+                            completed=current,
+                            description=f"[cyan]Syncing tech stacks [{current}/{total}]: {name}",
+                        )
 
-                    techstack_summary = sync_tech_stacks(updated_services, dry_run, progress_callback=update_progress)
+                    techstack_summary = sync_tech_stacks(
+                        updated_services, dry_run, progress_callback=update_progress
+                    )
 
-                console.print(f"  [green]✓[/green] Linked: {techstack_summary['linked']}")
-                console.print(f"  [green]✓[/green] Created: {techstack_summary['created']}")
-                if techstack_summary['failed'] > 0:
-                    console.print(f"  [red]✗[/red] Failed: {techstack_summary['failed']}")
+                console.print(
+                    f"  [green]✓[/green] Linked: {techstack_summary['linked']}"
+                )
+                console.print(
+                    f"  [green]✓[/green] Created: {techstack_summary['created']}"
+                )
+                if techstack_summary["failed"] > 0:
+                    console.print(
+                        f"  [red]✗[/red] Failed: {techstack_summary['failed']}"
+                    )
 
                 # Display errors if any
-                if techstack_summary.get('errors'):
+                if techstack_summary.get("errors"):
                     console.print("\n  [red]Errors:[/red]")
-                    for error in techstack_summary['errors']:
-                        console.print(f"    • {error['techstack']} (service: {error['service']}): {error['error']}")
+                    for error in techstack_summary["errors"]:
+                        console.print(
+                            f"    • {error['techstack']} (service: {error['service']}): {error['error']}"
+                        )
 
                 console.print()
             except Exception as e:
@@ -274,7 +289,9 @@ def sync_pathfinder(
             console.print("[bold]Syncing Contributors...[/bold]")
             try:
                 # Calculate total contributors
-                total_contributors = sum(len(s.get("contributors", [])) for s in updated_services)
+                total_contributors = sum(
+                    len(s.get("contributors", [])) for s in updated_services
+                )
 
                 with Progress(
                     SpinnerColumn(),
@@ -283,25 +300,41 @@ def sync_pathfinder(
                     TaskProgressColumn(),
                     TimeElapsedColumn(),
                     console=console,
-                    transient=False
+                    transient=False,
                 ) as progress:
-                    task = progress.add_task("[cyan]Syncing contributors...", total=total_contributors)
+                    task = progress.add_task(
+                        "[cyan]Syncing contributors...", total=total_contributors
+                    )
 
                     def update_progress(current, total, name):
-                        progress.update(task, completed=current, description=f"[cyan]Syncing contributors [{current}/{total}]: {name}")
+                        progress.update(
+                            task,
+                            completed=current,
+                            description=f"[cyan]Syncing contributors [{current}/{total}]: {name}",
+                        )
 
-                    contributor_summary = sync_contributors(updated_services, dry_run, progress_callback=update_progress)
+                    contributor_summary = sync_contributors(
+                        updated_services, dry_run, progress_callback=update_progress
+                    )
 
-                console.print(f"  [green]✓[/green] Created: {contributor_summary['created']}")
-                console.print(f"  [green]✓[/green] Already exists: {contributor_summary['already_exists']}")
-                if contributor_summary['failed'] > 0:
-                    console.print(f"  [red]✗[/red] Failed: {contributor_summary['failed']}")
+                console.print(
+                    f"  [green]✓[/green] Created: {contributor_summary['created']}"
+                )
+                console.print(
+                    f"  [green]✓[/green] Already exists: {contributor_summary['already_exists']}"
+                )
+                if contributor_summary["failed"] > 0:
+                    console.print(
+                        f"  [red]✗[/red] Failed: {contributor_summary['failed']}"
+                    )
 
                 # Display errors if any
-                if contributor_summary.get('errors'):
+                if contributor_summary.get("errors"):
                     console.print("\n  [red]Errors:[/red]")
-                    for error in contributor_summary['errors']:
-                        console.print(f"    • {error['contributor']} (service: {error['service']}): {error['error']}")
+                    for error in contributor_summary["errors"]:
+                        console.print(
+                            f"    • {error['contributor']} (service: {error['service']}): {error['error']}"
+                        )
 
                 console.print()
             except Exception as e:
@@ -322,35 +355,47 @@ def sync_pathfinder(
 
         summary_table.add_row(
             "Services",
-            str(service_summary['created']),
-            str(service_summary['updated']),
+            str(service_summary["created"]),
+            str(service_summary["updated"]),
             "-",
-            f"[red]{service_summary['failed']}[/red]" if service_summary['failed'] > 0 else "0"
+            f"[red]{service_summary['failed']}[/red]"
+            if service_summary["failed"] > 0
+            else "0",
         )
         summary_table.add_row(
             "Tech Stacks",
-            str(techstack_summary['created']),
-            str(techstack_summary['linked']),
+            str(techstack_summary["created"]),
+            str(techstack_summary["linked"]),
             "-",
-            f"[red]{techstack_summary['failed']}[/red]" if techstack_summary['failed'] > 0 else "0"
+            f"[red]{techstack_summary['failed']}[/red]"
+            if techstack_summary["failed"] > 0
+            else "0",
         )
         summary_table.add_row(
             "Contributors",
-            str(contributor_summary['created']),
+            str(contributor_summary["created"]),
             "-",
-            str(contributor_summary['already_exists']),
-            f"[red]{contributor_summary['failed']}[/red]" if contributor_summary['failed'] > 0 else "0"
+            str(contributor_summary["already_exists"]),
+            f"[red]{contributor_summary['failed']}[/red]"
+            if contributor_summary["failed"] > 0
+            else "0",
         )
         console.print(summary_table)
 
         # Final message
         if dry_run:
-            console.print("\n[yellow]Dry run completed - no changes were made to LeanIX[/yellow]")
+            console.print(
+                "\n[yellow]Dry run completed - no changes were made to LeanIX[/yellow]"
+            )
         else:
             console.print("\n[green]Sync completed successfully[/green]")
 
         # Exit with appropriate code
-        total_failed = service_summary['failed'] + techstack_summary['failed'] + contributor_summary['failed']
+        total_failed = (
+            service_summary["failed"]
+            + techstack_summary["failed"]
+            + contributor_summary["failed"]
+        )
         if total_failed > 0:
             sys.exit(1)
         else:

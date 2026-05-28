@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint
+        if: always()
+        run: uv run ruff check .
+
+      - name: Format check
+        if: always()
+        run: uv run ruff format --check .
+
+      - name: Tests
+        if: always()
+        run: uv run pytest --cov=src
+
+      - name: REUSE compliance
+        if: always()
+        uses: fsfe/reuse-action@v5

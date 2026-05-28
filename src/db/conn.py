@@ -6,6 +6,7 @@ from src.config import config
 engine = create_engine(config.DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 
+
 def get_session():
     """
     Returns a context-managed SQLAlchemy session instance.

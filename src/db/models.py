@@ -8,6 +8,7 @@ from src.logging.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class Base(DeclarativeBase):
     pass
 
@@ -20,12 +21,14 @@ class Organization(Base):
     name = Column(String)
     installed = Column(Boolean)
 
+
 class Repository(Base):
     __tablename__ = "repositories"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     full_name = Column(String)
     data = Column(JSON)
+
 
 class FactSheet(Base):
     __tablename__ = "fact_sheets"
@@ -34,6 +37,7 @@ class FactSheet(Base):
     repository_id = Column(Uuid(as_uuid=True))
     fact_sheet_name = Column(String)
     manifest_file_url = Column(String)
+
 
 class AiDiscoveryData(Base):
     __tablename__ = "ai_discovery_data"

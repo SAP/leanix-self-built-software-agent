@@ -1,25 +1,30 @@
-
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState
 from src.logging.logging import get_logger
-from src.nodes.runnables.discover_codeowners_runnable import discover_codeowners_runnable
+from src.nodes.runnables.discover_codeowners_runnable import (
+    discover_codeowners_runnable,
+)
 import json
 import re
 
 logger = get_logger(__name__)
 
 
-def extract_team_owners_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
+def extract_team_owners_agent(
+    state: RootRepoState, config: RunnableConfig
+) -> RootRepoState:
     """Extracts team names from list of codeowners"""
     logger.info(f"Repo URL: {state.repo_root_url}, deployable: {state.deployable}")
     if state.deployable:
         logger.info("Starting to extract team names from codeowners")
         try:
             # Get model name from config if provided
-            model_name = config.get("configurable", {}).get("model_name") if config else None
+            model_name = (
+                config.get("configurable", {}).get("model_name") if config else None
+            )
             llm = init_llm_by_provider(model_name)
 
             codeowners_content = discover_codeowners_runnable(state.repo_root_url)
@@ -71,7 +76,9 @@ def extract_team_owners_agent(state: RootRepoState, config: RunnableConfig) -> R
                 llm_output = chain.invoke({"codeowners_content": codeowners_content})
             except Exception as e:
                 logger.error(f"Error extracting team names: {e}")
-                match = re.search(r"Could not parse LLM output: `(.*)`", str(e), re.DOTALL)
+                match = re.search(
+                    r"Could not parse LLM output: `(.*)`", str(e), re.DOTALL
+                )
                 if match:
                     llm_output = match.group(1)
                 else:
@@ -81,12 +88,16 @@ def extract_team_owners_agent(state: RootRepoState, config: RunnableConfig) -> R
             try:
                 service_owners = json.loads(llm_output.content)
             except json.JSONDecodeError as e:
-                logger.error(f"JSON decode error: {e}. Raw output: {llm_output.content}")
+                logger.error(
+                    f"JSON decode error: {e}. Raw output: {llm_output.content}"
+                )
                 service_owners = extract_valid_json(llm_output.content)
             logger.info(f"service_owners: {service_owners}")
 
             # Build a mapping: service name -> owner_team
-            owner_map = {entry["service"]: entry["owner_team"] for entry in service_owners}
+            owner_map = {
+                entry["service"]: entry["owner_team"] for entry in service_owners
+            }
             logger.info(f"owner_map: {owner_map}")
 
             # Get the default owner_team from "*"
@@ -114,19 +125,21 @@ def extract_team_owners_agent(state: RootRepoState, config: RunnableConfig) -> R
             logger.error(f"Error assigning team ownership: {e}")
             return state
     else:
-        logger.info("Skipping team ownership assignment because the repo is not deployable.")
+        logger.info(
+            "Skipping team ownership assignment because the repo is not deployable."
+        )
         return state
 
 
 def extract_valid_json(raw_output):
     logger.info("Attempting to extract valid JSON from LLM output.")
     # Find the start of the array
-    start = raw_output.find('[')
-    end = raw_output.rfind('}')
+    start = raw_output.find("[")
+    end = raw_output.rfind("}")
     if start != -1 and end != -1 and end > start:
-        array_str = raw_output[start:end + 1]
+        array_str = raw_output[start : end + 1]
         logger.info(f"Found partial JSON array: {array_str[:200]}...")
-        obj_matches = re.findall(r'\{[^{}]*\}', array_str)
+        obj_matches = re.findall(r"\{[^{}]*\}", array_str)
         valid_objs = []
         for i, obj_str in enumerate(obj_matches):
             try:

@@ -7,12 +7,13 @@ from src.logging.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 def workflow_classifier_agent(
     workflow_content: str,
     workflow_path: str,
     repo_path: str = ".",
     readme_lines: int = 20,
-    strong_signals: Optional[List[str]] = None
+    strong_signals: Optional[List[str]] = None,
 ) -> Literal["deployment", "tooling", "unknown"]:
     """
     Use LLM to classify a workflow file as deployment or tooling, including the first part of the README for context,

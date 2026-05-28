@@ -1,4 +1,5 @@
 """Tests for context_dto module, specifically merge_contexts function."""
+
 from __future__ import annotations
 
 import pytest

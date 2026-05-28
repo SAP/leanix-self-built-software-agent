@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from langchain_core.runnables import RunnableConfig
 
@@ -10,12 +10,25 @@ from src.logging.logging import get_logger
 logger = get_logger(__name__)
 
 PACKAGE_MANAGER_FILES = [
-    "pom.xml", "build.gradle", "build.gradle.kts", "package.json", "requirements.txt",
-    "pyproject.toml", "setup.py", "Pipfile", "poetry.lock", "composer.json", "Gemfile",
-    "go.mod", "Cargo.toml"
+    "pom.xml",
+    "build.gradle",
+    "build.gradle.kts",
+    "package.json",
+    "requirements.txt",
+    "pyproject.toml",
+    "setup.py",
+    "Pipfile",
+    "poetry.lock",
+    "composer.json",
+    "Gemfile",
+    "go.mod",
+    "Cargo.toml",
 ]
 
-def detect_tech_stack_runnable(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
+
+def detect_tech_stack_runnable(
+    state: RootRepoState, config: RunnableConfig
+) -> RootRepoState:
     """
     For each self-built component, find package manager files and extract tech stack using LLM agent.
     """
@@ -37,24 +50,44 @@ def detect_tech_stack_runnable(state: RootRepoState, config: RunnableConfig) -> 
                 try:
                     content = file_path.read_text(encoding="utf-8")
                     # Get model name from config if provided
-                    model_name = config.get("configurable", {}).get("model_name") if config else None
+                    model_name = (
+                        config.get("configurable", {}).get("model_name")
+                        if config
+                        else None
+                    )
                     result = tech_stack_agent(content, model_name)
                     logger.info(f"Tech stack agent result for {file_path}: {result}")
-                    for stack_item in getattr(result, "tech_stacks", result.get("tech_stacks", [])):
+                    for stack_item in getattr(
+                        result, "tech_stacks", result.get("tech_stacks", [])
+                    ):
                         if stack_item and all(
-                            stack_item.get(key) if isinstance(stack_item, dict) else getattr(stack_item, key, None)
+                            stack_item.get(key)
+                            if isinstance(stack_item, dict)
+                            else getattr(stack_item, key, None)
                             for key in ["name", "version", "confidence", "evidence"]
                         ):
-                            tech_stacks.append(TechStack(
-                                name=stack_item["name"] if isinstance(stack_item, dict) else stack_item.name,
-                                version=stack_item["version"] if isinstance(stack_item, dict) else stack_item.version,
-                                confidence=stack_item["confidence"] if isinstance(stack_item, dict) else stack_item.confidence,
-                                evidence=stack_item["evidence"] if isinstance(stack_item, dict) else stack_item.evidence,
-                            ))
+                            tech_stacks.append(
+                                TechStack(
+                                    name=stack_item["name"]
+                                    if isinstance(stack_item, dict)
+                                    else stack_item.name,
+                                    version=stack_item["version"]
+                                    if isinstance(stack_item, dict)
+                                    else stack_item.version,
+                                    confidence=stack_item["confidence"]
+                                    if isinstance(stack_item, dict)
+                                    else stack_item.confidence,
+                                    evidence=stack_item["evidence"]
+                                    if isinstance(stack_item, dict)
+                                    else stack_item.evidence,
+                                )
+                            )
                 except Exception as e:
                     logger.warning(f"Failed to process {file_path}: {e}")
 
         component.tech_stacks = tech_stacks
-        logger.info(f"Extracted tech stack for {component.name}: {[f'{s.name} {s.version}' for s in component.tech_stacks]}")
+        logger.info(
+            f"Extracted tech stack for {component.name}: {[f'{s.name} {s.version}' for s in component.tech_stacks]}"
+        )
 
     return state

@@ -9,6 +9,7 @@ from src.logging.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 def clone_repo_tool_runnable(state: RootRepoState) -> RootRepoState:
     """
     Clone a Git repository to repo temp directory using GITHUB_TOKEN for authentication.
@@ -21,10 +22,10 @@ def clone_repo_tool_runnable(state: RootRepoState) -> RootRepoState:
 
     try:
         # Extract repo name from URL
-        if repo_url.endswith('.git'):
-            repo_name = repo_url.split('/')[-1][:-4]  # Remove .git suffix
+        if repo_url.endswith(".git"):
+            repo_name = repo_url.split("/")[-1][:-4]  # Remove .git suffix
         else:
-            repo_name = repo_url.split('/')[-1]
+            repo_name = repo_url.split("/")[-1]
 
         # Create repo temp directory at os temp directory
         temp_dir = os.path.join(tempfile.gettempdir(), repo_name)
@@ -32,7 +33,7 @@ def clone_repo_tool_runnable(state: RootRepoState) -> RootRepoState:
         local_path = temp_dir
 
         # Get GitHub token from environment
-        github_token = os.getenv('GITHUB_TOKEN')
+        github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
             raise Exception("GITHUB_TOKEN environment variable is not set")
 
@@ -50,7 +51,7 @@ def clone_repo_tool_runnable(state: RootRepoState) -> RootRepoState:
             ["git", "clone", authenticated_url, local_path],
             capture_output=True,
             text=True,
-            timeout=300  # 5 minute timeout
+            timeout=300,  # 5 minute timeout
         )
 
         if result.returncode != 0:
@@ -61,7 +62,9 @@ def clone_repo_tool_runnable(state: RootRepoState) -> RootRepoState:
             raise Exception(f"Git clone failed: {result.stderr}")
 
         # Verify the clone was successful
-        if not os.path.exists(local_path) or not os.path.exists(os.path.join(local_path, ".git")):
+        if not os.path.exists(local_path) or not os.path.exists(
+            os.path.join(local_path, ".git")
+        ):
             if os.path.exists(local_path):
                 shutil.rmtree(local_path, ignore_errors=True)
             raise Exception("Repository was not cloned properly")
@@ -80,6 +83,7 @@ def clone_repo_tool_runnable(state: RootRepoState) -> RootRepoState:
         logger.error(f"Error during clone: {str(exc)}")
         raise exc
 
+
 def _get_authenticated_url(repo_url: str, token: str) -> str:
     """
     Convert a GitHub repository URL to an authenticated URL using the provided token.
@@ -93,7 +97,7 @@ def _get_authenticated_url(repo_url: str, token: str) -> str:
     """
     parsed = urlparse(repo_url)
 
-    if parsed.hostname != 'github.com':
+    if parsed.hostname != "github.com":
         # If it's not GitHub, return original URL
         return repo_url
 

@@ -7,8 +7,10 @@ from src.logging.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 def simple_evaluation(output, expected_output) -> bool:
     return output == expected_output
+
 
 def names_from_state(state: RootRepoState) -> Set[str]:
     return {
@@ -16,6 +18,7 @@ def names_from_state(state: RootRepoState) -> Set[str]:
         for c in state.self_built_software or []
         if isinstance(c.name, str) and c.name.strip()
     }
+
 
 def names_from_gold(gold: GoldExpectedOutput) -> Set[str]:
     return {
@@ -62,6 +65,7 @@ def calculate_recall(pred: RootRepoState, gold: GoldExpectedOutput) -> float:
     true_positives = len(pred_names & gold_names)
     return true_positives / len(gold_names)
 
+
 def normalize_teams(team):
     if isinstance(team, str):
         return {t.strip().lower() for t in team.split(";") if t.strip()}
@@ -69,11 +73,22 @@ def normalize_teams(team):
         return {t.strip().lower() for t in team if isinstance(t, str) and t.strip()}
     return set()
 
+
 def team_name_evaluation(pred: RootRepoState, gold: GoldExpectedOutput) -> float:
     if pred.deployable:
-        logger.info(f"Evaluating team names for repo: {getattr(pred, 'repo_root_url', None)}")
-        pred_components = {c.name.strip().lower(): normalize_teams(getattr(c.owner, "team", "")) for c in pred.self_built_software or []}
-        gold_components = {comp["name"].strip().lower(): normalize_teams(comp.get("owner", {}).get("team", "")) for comp in gold["self_built_software"]}
+        logger.info(
+            f"Evaluating team names for repo: {getattr(pred, 'repo_root_url', None)}"
+        )
+        pred_components = {
+            c.name.strip().lower(): normalize_teams(getattr(c.owner, "team", ""))
+            for c in pred.self_built_software or []
+        }
+        gold_components = {
+            comp["name"].strip().lower(): normalize_teams(
+                comp.get("owner", {}).get("team", "")
+            )
+            for comp in gold["self_built_software"]
+        }
 
         if not gold_components:
             logger.info("No gold teams found, returning 0.0")
@@ -89,7 +104,9 @@ def team_name_evaluation(pred: RootRepoState, gold: GoldExpectedOutput) -> float
             found = False
             for gold_team in gold_teams:
                 if gold_team.lower() == "na":
-                    if not pred_teams or any(not pt or pt.strip() == "" for pt in pred_teams):
+                    if not pred_teams or any(
+                        not pt or pt.strip() == "" for pt in pred_teams
+                    ):
                         found = True
                         break
                 elif any(gold_team == pt for pt in pred_teams):
@@ -106,12 +123,16 @@ def team_name_evaluation(pred: RootRepoState, gold: GoldExpectedOutput) -> float
         logger.info("Skipping team name evaluation for non-deployable repo")
         return 1.0
 
-def team_name_evaluation_boolean(pred: RootRepoState, gold: GoldExpectedOutput) -> float:
+
+def team_name_evaluation_boolean(
+    pred: RootRepoState, gold: GoldExpectedOutput
+) -> float:
     score = team_name_evaluation(pred, gold)
     if score == 1.0:
         return True
     else:
         return False
+
 
 def sbs_language_evaluation(pred, gold):
     try:
@@ -153,23 +174,42 @@ def sbs_language_evaluation(pred, gold):
         logger.error(f"Exception during language evaluation: {e}")
         return False
 
+
 def individual_contributors_evaluation_boolean(pred: RootRepoState) -> bool:
     """Evaluate if all self-built software components have at least one individual contributor."""
 
-    evaluation : bool = True
+    evaluation: bool = True
 
     if pred.deployable:
-        logger.info(f"Evaluating individual contributors for repo: {getattr(pred, 'repo_root_url', None)}")
-        evaluation = all(len(sbs.owner.individuals) > 0 for sbs in pred.self_built_software)
+        logger.info(
+            f"Evaluating individual contributors for repo: {getattr(pred, 'repo_root_url', None)}"
+        )
+        evaluation = all(
+            len(sbs.owner.individuals) > 0 for sbs in pred.self_built_software
+        )
 
     return evaluation
 
-def sbs_count_and_names_match(pred: RootRepoState, gold: GoldExpectedOutput) -> bool:
-    pred_names = [c.name.strip().lower() for c in pred.self_built_software or [] if isinstance(c.name, str) and c.name.strip()]
-    gold_names = [comp["name"].strip().lower() for comp in gold["self_built_software"] if isinstance(comp.get("name"), str) and comp["name"].strip()]
-    return len(pred_names) == len(gold_names) and all(name in gold_names for name in pred_names)
 
-def tech_stack_name_evaluation_boolean(pred: RootRepoState, gold: GoldExpectedOutput) -> bool:
+def sbs_count_and_names_match(pred: RootRepoState, gold: GoldExpectedOutput) -> bool:
+    pred_names = [
+        c.name.strip().lower()
+        for c in pred.self_built_software or []
+        if isinstance(c.name, str) and c.name.strip()
+    ]
+    gold_names = [
+        comp["name"].strip().lower()
+        for comp in gold["self_built_software"]
+        if isinstance(comp.get("name"), str) and comp["name"].strip()
+    ]
+    return len(pred_names) == len(gold_names) and all(
+        name in gold_names for name in pred_names
+    )
+
+
+def tech_stack_name_evaluation_boolean(
+    pred: RootRepoState, gold: GoldExpectedOutput
+) -> bool:
     pred_components = {c.name: c for c in pred.self_built_software}
     gold_components = gold["self_built_software"]
 
@@ -180,12 +220,18 @@ def tech_stack_name_evaluation_boolean(pred: RootRepoState, gold: GoldExpectedOu
             continue
 
         pred_comp = pred_components[gold_name]
-        pred_tech_names = {ts.name.lower() for ts in getattr(pred_comp, "tech_stacks", [])}
-        gold_tech_names = {ts["name"].lower() for ts in gold_comp.get("tech_stacks", [])}
+        pred_tech_names = {
+            ts.name.lower() for ts in getattr(pred_comp, "tech_stacks", [])
+        }
+        gold_tech_names = {
+            ts["name"].lower() for ts in gold_comp.get("tech_stacks", [])
+        }
 
         missing = gold_tech_names - pred_tech_names
         if missing:
-            logger.info(f"Missing tech stack name in component '{gold_name}'. Missing tech stacks: {missing}")
+            logger.info(
+                f"Missing tech stack name in component '{gold_name}'. Missing tech stacks: {missing}"
+            )
             return False
         else:
             logger.info(f"Component '{gold_name}' all tech stacks (names) present.")
@@ -193,7 +239,9 @@ def tech_stack_name_evaluation_boolean(pred: RootRepoState, gold: GoldExpectedOu
     return True
 
 
-def tech_stack_name_and_version_evaluation_boolean(pred: RootRepoState, gold: GoldExpectedOutput) -> bool:
+def tech_stack_name_and_version_evaluation_boolean(
+    pred: RootRepoState, gold: GoldExpectedOutput
+) -> bool:
     pred_components = {c.name: c for c in pred.self_built_software}
     gold_components = gold["self_built_software"]
 
@@ -204,14 +252,24 @@ def tech_stack_name_and_version_evaluation_boolean(pred: RootRepoState, gold: Go
             continue
 
         pred_comp = pred_components[gold_name]
-        pred_tech = {(ts.name.lower(), ts.version) for ts in getattr(pred_comp, "tech_stacks", [])}
-        gold_tech = {(ts["name"].lower(), ts.get("version")) for ts in gold_comp.get("tech_stacks", [])}
+        pred_tech = {
+            (ts.name.lower(), ts.version)
+            for ts in getattr(pred_comp, "tech_stacks", [])
+        }
+        gold_tech = {
+            (ts["name"].lower(), ts.get("version"))
+            for ts in gold_comp.get("tech_stacks", [])
+        }
 
         missing = gold_tech - pred_tech
         if missing:
-            logger.info(f"Missing tech stack name/version in component '{gold_name}'. Missing tech stacks: {missing}")
+            logger.info(
+                f"Missing tech stack name/version in component '{gold_name}'. Missing tech stacks: {missing}"
+            )
             return False
         else:
-            logger.info(f"Component '{gold_name}' all tech stacks (names and versions) present.")
+            logger.info(
+                f"Component '{gold_name}' all tech stacks (names and versions) present."
+            )
 
     return True

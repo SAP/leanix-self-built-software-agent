@@ -1,7 +1,7 @@
 """Tests for context_injection module, specifically format_context_for_prompt."""
+
 from __future__ import annotations
 
-import pytest
 
 from src.dto.context_dto import DiscoveryContext
 from src.utils.context_injection import format_context_for_prompt
@@ -62,7 +62,9 @@ class TestFormatContextForPrompt:
 
     def test_preserves_content(self) -> None:
         """The merged content is preserved in output."""
-        content = "This is my custom context\nWith multiple lines\nAnd special chars: @#$%"
+        content = (
+            "This is my custom context\nWith multiple lines\nAnd special chars: @#$%"
+        )
         ctx = DiscoveryContext(merged_context=content)
         result = format_context_for_prompt(ctx)
 

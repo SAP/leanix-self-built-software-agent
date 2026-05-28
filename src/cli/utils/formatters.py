@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from rich.console import Console
 from rich.table import Table
 
-from src.dto.state_dto import RootRepoState 
+from src.dto.state_dto import RootRepoState
 from src.logging.logging import get_logger
 
 console = Console()
@@ -29,20 +29,26 @@ def format_summary_table(stats: Dict[str, int]) -> Table:
     table.add_column("Metric", style="cyan", no_wrap=True)
     table.add_column("Count", justify="right", style="green")
 
-    table.add_row("Repositories", str(stats.get('total_repositories', 0)))
-    table.add_row("Deployable", str(stats.get('deployable', 0)))
-    table.add_row("Non-deployable", str(stats.get('non_deployable', 0)))
-    table.add_row("Mono-repos", str(stats.get('mono_repos', 0)))
-    table.add_row("Single-purpose", str(stats.get('single_purpose_repos', 0)))
-    table.add_row("Services found", str(stats.get('total_services', 0)))
-    table.add_row("Unique teams", str(stats.get('unique_teams', 0)))
-    table.add_row("Tech stacks", str(stats.get('total_tech_stacks', 0)))
-    table.add_row("Failed", str(stats.get('failed', 0)), style="red" if stats.get('failed', 0) > 0 else "green")
+    table.add_row("Repositories", str(stats.get("total_repositories", 0)))
+    table.add_row("Deployable", str(stats.get("deployable", 0)))
+    table.add_row("Non-deployable", str(stats.get("non_deployable", 0)))
+    table.add_row("Mono-repos", str(stats.get("mono_repos", 0)))
+    table.add_row("Single-purpose", str(stats.get("single_purpose_repos", 0)))
+    table.add_row("Services found", str(stats.get("total_services", 0)))
+    table.add_row("Unique teams", str(stats.get("unique_teams", 0)))
+    table.add_row("Tech stacks", str(stats.get("total_tech_stacks", 0)))
+    table.add_row(
+        "Failed",
+        str(stats.get("failed", 0)),
+        style="red" if stats.get("failed", 0) > 0 else "green",
+    )
 
     return table
 
 
-def format_repo_status(repo_url: str, repo_state: RootRepoState, error: Optional[str] = None) -> None:
+def format_repo_status(
+    repo_url: str, repo_state: RootRepoState, error: Optional[str] = None
+) -> None:
     """
     Display the status of a processed repository.
 
@@ -70,10 +76,14 @@ def format_repo_status(repo_url: str, repo_state: RootRepoState, error: Optional
         console.print(f"  [green]✓ Deployment signals detected:[/green] {signals}")
 
     if repo_state.repo_type:
-        console.print(f"  [green]✓ Repository type:[/green] {repo_state.repo_type.value}")
+        console.print(
+            f"  [green]✓ Repository type:[/green] {repo_state.repo_type.value}"
+        )
 
     if repo_state.self_built_software:
-        console.print(f"  [green]✓ Services discovered:[/green] {len(repo_state.self_built_software)}")
+        console.print(
+            f"  [green]✓ Services discovered:[/green] {len(repo_state.self_built_software)}"
+        )
         for component in repo_state.self_built_software[:3]:
             path_info = f" (path: {component.path})" if component.path else ""
             console.print(f"    - {component.name}{path_info}")
@@ -89,7 +99,7 @@ def export_to_json(
     output_path: str,
     source: str = "organization",
     org_or_repo: str = Optional[None],
-    version: str = "0.1.0"
+    version: str = "0.1.0",
 ) -> None:
     """
     Export discovery results to a JSON file.
@@ -109,21 +119,21 @@ def export_to_json(
         "metadata": {
             "analyzed_at": datetime.now(timezone.utc).isoformat() + "Z",
             "source": source,
-            "total_repositories": stats.get('total_repositories', 0),
-            "version": version
+            "total_repositories": stats.get("total_repositories", 0),
+            "version": version,
         },
         "repositories": results,
         "summary": {
-            "total_repositories": stats.get('total_repositories', 0),
-            "deployable": stats.get('deployable', 0),
-            "non_deployable": stats.get('non_deployable', 0),
-            "mono_repos": stats.get('mono_repos', 0),
-            "single_purpose_repos": stats.get('single_purpose_repos', 0),
-            "total_services": stats.get('total_services', 0),
-            "unique_teams": stats.get('unique_teams', 0),
-            "total_tech_stacks": stats.get('total_tech_stacks', 0),
-            "failed": stats.get('failed', 0)
-        }
+            "total_repositories": stats.get("total_repositories", 0),
+            "deployable": stats.get("deployable", 0),
+            "non_deployable": stats.get("non_deployable", 0),
+            "mono_repos": stats.get("mono_repos", 0),
+            "single_purpose_repos": stats.get("single_purpose_repos", 0),
+            "total_services": stats.get("total_services", 0),
+            "unique_teams": stats.get("unique_teams", 0),
+            "total_tech_stacks": stats.get("total_tech_stacks", 0),
+            "failed": stats.get("failed", 0),
+        },
     }
 
     # Add organization or repository to metadata
@@ -134,7 +144,7 @@ def export_to_json(
 
     try:
         output_file = Path(output_path)
-        output_file.write_text(json.dumps(output, indent=2), encoding='utf-8')
+        output_file.write_text(json.dumps(output, indent=2), encoding="utf-8")
         console.print(f"\n[green]Results saved to:[/green] {output_path}")
         logger.info(f"Exported results to {output_path}")
     except Exception as e:
@@ -169,7 +179,9 @@ def repo_state_to_dict(repo_state: RootRepoState) -> Dict[str, Any]:
                 "name": component.name,
                 "path": component.path,
                 "display_url": component.display_url,
-                "component_type": component.component_type.value if component.component_type else "unknown",
+                "component_type": component.component_type.value
+                if component.component_type
+                else "unknown",
                 "evidence": component.evidence,
                 "confidence": component.confidence,
             }
@@ -183,11 +195,7 @@ def repo_state_to_dict(repo_state: RootRepoState) -> Dict[str, Any]:
                 }
                 if component.owner.individuals:
                     comp_dict["owner"]["individuals"] = [
-                        {
-                            "name": ind.name,
-                            "github": ind.github,
-                            "emails": ind.emails
-                        }
+                        {"name": ind.name, "github": ind.github, "emails": ind.emails}
                         for ind in component.owner.individuals
                     ]
 
@@ -212,23 +220,27 @@ def repo_state_to_dict(repo_state: RootRepoState) -> Dict[str, Any]:
                         "name": ts_name,
                         "version": ts_version,
                         "confidence": ts_confidence,
-                        "evidence": []
+                        "evidence": [],
                     }
 
                     # Process evidence (same for both dict and object)
                     for ev in ts_evidence:
                         if isinstance(ev, dict):
-                            ts_dict["evidence"].append({
-                                "path": ev.get("path", ""),
-                                "snippet": ev.get("snippet", ""),
-                                "reason": ev.get("reason", "")
-                            })
+                            ts_dict["evidence"].append(
+                                {
+                                    "path": ev.get("path", ""),
+                                    "snippet": ev.get("snippet", ""),
+                                    "reason": ev.get("reason", ""),
+                                }
+                            )
                         else:
-                            ts_dict["evidence"].append({
-                                "path": ev.path,
-                                "snippet": ev.snippet,
-                                "reason": ev.reason
-                            })
+                            ts_dict["evidence"].append(
+                                {
+                                    "path": ev.path,
+                                    "snippet": ev.snippet,
+                                    "reason": ev.reason,
+                                }
+                            )
 
                     comp_dict["tech_stacks"].append(ts_dict)
 

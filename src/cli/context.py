@@ -61,7 +61,7 @@ Repository-specific hints override organization defaults.
 """
 
 
-@click.group(name='context')
+@click.group(name="context")
 @click.pass_context
 def context_group(ctx: click.Context) -> None:
     """
@@ -86,22 +86,14 @@ def context_group(ctx: click.Context) -> None:
     pass
 
 
-@context_group.command(name='init')
+@context_group.command(name="init")
 @click.option(
-    '--org',
-    type=str,
-    help='Organization name (creates ~/.sbs-discovery/{org}.md)'
+    "--org", type=str, help="Organization name (creates ~/.sbs-discovery/{org}.md)"
 )
 @click.option(
-    '--repo',
-    is_flag=True,
-    help='Create repository context file in current directory'
+    "--repo", is_flag=True, help="Create repository context file in current directory"
 )
-@click.option(
-    '--force',
-    is_flag=True,
-    help='Overwrite existing context files'
-)
+@click.option("--force", is_flag=True, help="Overwrite existing context files")
 @click.pass_context
 def init(
     ctx: click.Context,
@@ -133,9 +125,7 @@ def init(
     """
     # Validate at least one option is provided
     if not org and not repo:
-        console.print(
-            "[red]Error:[/red] Please specify --org <name> and/or --repo\n"
-        )
+        console.print("[red]Error:[/red] Please specify --org <name> and/or --repo\n")
         console.print("Examples:")
         console.print("  sbs-ai-discovery context init --org mycompany")
         console.print("  sbs-ai-discovery context init --repo")

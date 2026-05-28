@@ -7,9 +7,9 @@ improve AI discovery accuracy. Context can be loaded from:
 
 Repository context extends/overrides organization context.
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Optional
 

@@ -20,7 +20,9 @@ from typing import Final
 from IPython import get_ipython
 from IPython.display import Image, display
 
-from src.workflows.repo_type_workflow import generate_repo_type_workflow    # ← adjust the import!
+from src.workflows.repo_type_workflow import (
+    generate_repo_type_workflow,
+)  # ← adjust the import!
 
 
 PNG_FILENAME: Final[str] = "repo_type_graph.png"
@@ -28,11 +30,11 @@ PNG_FILENAME: Final[str] = "repo_type_graph.png"
 
 def _build_png() -> bytes:
     """Compile the graph and return its Mermaid PNG as raw bytes."""
-    compiled = generate_repo_type_workflow()       # -> CompiledStateGraph
-    return compiled.get_graph().draw_mermaid_png() # <- use the inner graph
+    compiled = generate_repo_type_workflow()  # -> CompiledStateGraph
+    return compiled.get_graph().draw_mermaid_png()  # <- use the inner graph
 
 
-def show_graph() -> None:                     # noqa: D401 – simple wrapper
+def show_graph() -> None:  # noqa: D401 – simple wrapper
     """Display the PNG inline (for notebooks / IPython)."""
     png = _build_png()
     display(Image(png))
@@ -47,7 +49,7 @@ def save_graph(path: str | pathlib.Path = PNG_FILENAME) -> pathlib.Path:
 
 # ─── CLI entry-point ────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    if get_ipython():                # running inside IPython or Jupyter?
+    if get_ipython():  # running inside IPython or Jupyter?
         show_graph()
     else:
         out = save_graph()

@@ -9,14 +9,17 @@ from src.nodes.agents.workflow_classifier_agent import workflow_classifier_agent
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class DeploymentSignal:
     """Represents a deployment indicator found in the repository."""
+
     category: str
     signal_type: str
     file_path: str
     description: str
     strength: str  # 'strong', 'medium', 'weak'
+
 
 def deployment_signals_detection_runnable(state: RootRepoState) -> RootRepoState:
     """
@@ -36,15 +39,21 @@ def deployment_signals_detection_runnable(state: RootRepoState) -> RootRepoState
 
     deployment_signals = detect_deployment_signals(local_repo_path)
 
-    strong_signals = [signal for signal in deployment_signals if signal.strength == 'strong']
+    strong_signals = [
+        signal for signal in deployment_signals if signal.strength == "strong"
+    ]
     state.deployable_signal_files = [signal.file_path for signal in strong_signals]
 
     # Log findings
     if deployment_signals:
         logger.info(f"Found {len(deployment_signals)} deployment signals:")
         for signal in deployment_signals:
-            logger.info(f"  {signal.strength.upper()}: {signal.category}:{signal.signal_type} at {signal.file_path}")
-        logger.info(f"Strong signals added to deployable_signal_files: {len(strong_signals)}")
+            logger.info(
+                f"  {signal.strength.upper()}: {signal.category}:{signal.signal_type} at {signal.file_path}"
+            )
+        logger.info(
+            f"Strong signals added to deployable_signal_files: {len(strong_signals)}"
+        )
     else:
         logger.info("No deployment signals detected")
 
@@ -54,20 +63,28 @@ def deployment_signals_detection_runnable(state: RootRepoState) -> RootRepoState
         return state
 
     ci_cd_signals = [
-        signal for signal in deployment_signals
-        if signal.category == 'ci_cd' and signal.strength in ['strong', 'medium']
+        signal
+        for signal in deployment_signals
+        if signal.category == "ci_cd" and signal.strength in ["strong", "medium"]
     ]
-    has_app_service_deploy = has_service_deployment_workflow_llm(local_repo_path, ci_cd_signals)
+    has_app_service_deploy = has_service_deployment_workflow_llm(
+        local_repo_path, ci_cd_signals
+    )
     if has_app_service_deploy:
-        logger.info(f"Repository has deployable service detection. "
-                    f"Also contains tool/automation workflows.")
+        logger.info(
+            "Repository has deployable service detection. "
+            "Also contains tool/automation workflows."
+        )
         state.deployable = True
     else:
-        logger.info(f"Repository does not have deployable service detection. "
-                    f"Also does not contain tool/automation workflows.")
+        logger.info(
+            "Repository does not have deployable service detection. "
+            "Also does not contain tool/automation workflows."
+        )
         state.deployable = False
 
     return state
+
 
 def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
     """
@@ -146,7 +163,7 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
                 ("**/kustomization.yaml", "Kustomize"),
                 ("**/kustomization.yml", "Kustomize"),
                 ("**/Kustomization", "Kustomize"),
-            ]
+            ],
         },
         "containerization": {
             "docker": [
@@ -161,7 +178,7 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
             "buildpacks": [
                 ("**/project.toml", "Cloud Native Buildpacks"),
                 ("**/Procfile", "Buildpack Process File"),
-            ]
+            ],
         },
         "serverless": {
             "framework_agnostic": [
@@ -199,7 +216,7 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
             ],
             "cloudflare": [
                 ("**/wrangler.toml", "Cloudflare Workers"),
-            ]
+            ],
         },
         "platform_specific": {
             "heroku": [
@@ -216,7 +233,7 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
             "railway": [
                 ("**/railway.json", "Railway Deployment"),
                 ("**/railway.toml", "Railway Deployment"),
-            ]
+            ],
         },
         "ci_cd": {
             "github_actions": [
@@ -238,7 +255,7 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
             ],
             "travis": [
                 ("**/.travis.yml", "Travis CI"),
-            ]
+            ],
         },
         "infrastructure_as_code": {
             "terraform": [
@@ -256,7 +273,7 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
             "cdk": [
                 ("**/cdk.json", "AWS CDK"),
                 ("**/cdk.yaml", "AWS CDK"),
-            ]
+            ],
         },
         "gitops": {
             "argocd": [
@@ -268,8 +285,8 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
                 ("**/kustomization.yaml", "Flux Kustomization"),
                 ("**/helmrelease.yaml", "Flux Helm Release"),
                 ("**/gitrepository.yaml", "Flux Git Repository"),
-            ]
-        }
+            ],
+        },
     }
 
     # Search for deployment signals
@@ -280,13 +297,15 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
                 for file_path in found_files:
                     if _is_valid_deployment_file(file_path):
                         relative_path = file_path.relative_to(repo_path)
-                        signals.append(DeploymentSignal(
-                            category=category,
-                            signal_type=signal_type,
-                            file_path=str(relative_path),
-                            description=description,
-                            strength='weak'  # Default strength, will be updated later
-                        ))
+                        signals.append(
+                            DeploymentSignal(
+                                category=category,
+                                signal_type=signal_type,
+                                file_path=str(relative_path),
+                                description=description,
+                                strength="weak",  # Default strength, will be updated later
+                            )
+                        )
 
     # Content-based detection for CI/CD deployment steps
     signals.extend(_detect_cicd_deployment_content(repo_path))
@@ -299,13 +318,22 @@ def detect_deployment_signals(repo_path: Path) -> List[DeploymentSignal]:
 
     return signals
 
+
 def _is_valid_deployment_file(file_path: Path) -> bool:
     """Check if file is a valid deployment configuration file."""
 
     # Skip if in excluded directories
     excluded_dirs = {
-        'node_modules', '.git', '__pycache__', 'target', 'build',
-        'dist', '.venv', 'venv', 'vendor', 'deps'
+        "node_modules",
+        ".git",
+        "__pycache__",
+        "target",
+        "build",
+        "dist",
+        ".venv",
+        "venv",
+        "vendor",
+        "deps",
     }
 
     if any(part in excluded_dirs for part in file_path.parts):
@@ -319,6 +347,7 @@ def _is_valid_deployment_file(file_path: Path) -> bool:
         return False
 
     return True
+
 
 def _detect_cicd_deployment_content(repo_path: Path) -> List[DeploymentSignal]:
     """Detect deployment-related content in CI/CD files."""
@@ -334,10 +363,22 @@ def _detect_cicd_deployment_content(repo_path: Path) -> List[DeploymentSignal]:
     ]
 
     deployment_keywords = [
-        'docker build', 'docker push', 'kubectl apply', 'helm upgrade',
-        'helm install', 'serverless deploy', 'aws ecs', 'gcloud deploy',
-        'terraform apply', 'pulumi up', 'deploy:', 'deployment:',
-        'aws lambda', 'azure functions', 'vercel --prod', 'netlify deploy'
+        "docker build",
+        "docker push",
+        "kubectl apply",
+        "helm upgrade",
+        "helm install",
+        "serverless deploy",
+        "aws ecs",
+        "gcloud deploy",
+        "terraform apply",
+        "pulumi up",
+        "deploy:",
+        "deployment:",
+        "aws lambda",
+        "azure functions",
+        "vercel --prod",
+        "netlify deploy",
     ]
 
     for ci_file in ci_files:
@@ -345,22 +386,25 @@ def _detect_cicd_deployment_content(repo_path: Path) -> List[DeploymentSignal]:
             continue
 
         try:
-            content = ci_file.read_text(encoding='utf-8').lower()
+            content = ci_file.read_text(encoding="utf-8").lower()
             for keyword in deployment_keywords:
                 if keyword in content:
                     relative_path = ci_file.relative_to(repo_path)
-                    signals.append(DeploymentSignal(
-                        category="ci_cd",
-                        signal_type="deployment_step",
-                        file_path=str(relative_path),
-                        description=f"CI/CD with deployment step: {keyword}",
-                        strength='medium'  # Content-based signals are medium strength
-                    ))
+                    signals.append(
+                        DeploymentSignal(
+                            category="ci_cd",
+                            signal_type="deployment_step",
+                            file_path=str(relative_path),
+                            description=f"CI/CD with deployment step: {keyword}",
+                            strength="medium",  # Content-based signals are medium strength
+                        )
+                    )
                     break  # Only add one signal per file
         except Exception as e:
             logger.debug(f"Could not read CI file {ci_file}: {e}")
 
     return signals
+
 
 def _detect_container_references(repo_path: Path) -> List[DeploymentSignal]:
     """Detect references to container builds in compose/manifest files."""
@@ -376,23 +420,30 @@ def _detect_container_references(repo_path: Path) -> List[DeploymentSignal]:
             continue
 
         try:
-            content = compose_file.read_text(encoding='utf-8')
+            content = compose_file.read_text(encoding="utf-8")
             # Look for build context references
-            if re.search(r'build:\s*\.', content) or re.search(r'build:\s*\w+', content):
+            if re.search(r"build:\s*\.", content) or re.search(
+                r"build:\s*\w+", content
+            ):
                 relative_path = compose_file.relative_to(repo_path)
-                signals.append(DeploymentSignal(
-                    category="containerization",
-                    signal_type="local_build",
-                    file_path=str(relative_path),
-                    description="Docker Compose with local build context",
-                    strength='medium'  # Detected build context is medium strength
-                ))
+                signals.append(
+                    DeploymentSignal(
+                        category="containerization",
+                        signal_type="local_build",
+                        file_path=str(relative_path),
+                        description="Docker Compose with local build context",
+                        strength="medium",  # Detected build context is medium strength
+                    )
+                )
         except Exception as e:
             logger.debug(f"Could not read compose file {compose_file}: {e}")
 
     return signals
 
-def _classify_signal_strength_by_combination(signals: List[DeploymentSignal]) -> List[DeploymentSignal]:
+
+def _classify_signal_strength_by_combination(
+    signals: List[DeploymentSignal],
+) -> List[DeploymentSignal]:
     """
     Classify the strength of deployment signals based on combination requirements.
 
@@ -410,38 +461,61 @@ def _classify_signal_strength_by_combination(signals: List[DeploymentSignal]) ->
 
     # Check if we have all three required categories
     has_package_manager = "package_manager" in categories_found
-    has_ci_cd = "ci_cd" in categories_found or any(s.category == "ci_cd" and s.signal_type == "deployment_step" for s in signals)
-    has_way_to_run = ("containerization" in categories_found or
-                     "serverless" in categories_found or
-                     "platform_specific" in categories_found or
-                     "kubernetes" in categories_found)
+    has_ci_cd = "ci_cd" in categories_found or any(
+        s.category == "ci_cd" and s.signal_type == "deployment_step" for s in signals
+    )
+    has_way_to_run = (
+        "containerization" in categories_found
+        or "serverless" in categories_found
+        or "platform_specific" in categories_found
+        or "kubernetes" in categories_found
+    )
 
     # Count how many of the three components we have
     component_count = sum([has_package_manager, has_ci_cd, has_way_to_run])
 
-    logger.info(f"Deployment components found - Package Manager: {has_package_manager}, CI/CD: {has_ci_cd}, Way to Run: {has_way_to_run}")
+    logger.info(
+        f"Deployment components found - Package Manager: {has_package_manager}, CI/CD: {has_ci_cd}, Way to Run: {has_way_to_run}"
+    )
 
     # Classify all signals based on the overall combination
     for signal in signals:
         if component_count >= 3:
             # All three components present - strong signals for relevant categories
-            if (signal.category in ["package_manager", "ci_cd", "containerization", "serverless", "platform_specific", "kubernetes"] or
-                (signal.category == "ci_cd" and signal.signal_type == "deployment_step")):
-                signal.strength = 'strong'
+            if signal.category in [
+                "package_manager",
+                "ci_cd",
+                "containerization",
+                "serverless",
+                "platform_specific",
+                "kubernetes",
+            ] or (
+                signal.category == "ci_cd" and signal.signal_type == "deployment_step"
+            ):
+                signal.strength = "strong"
             else:
-                signal.strength = 'medium'
+                signal.strength = "medium"
         elif component_count >= 2:
             # Two components present - medium strength
-            if (signal.category in ["package_manager", "ci_cd", "containerization", "serverless", "platform_specific", "kubernetes"] or
-                (signal.category == "ci_cd" and signal.signal_type == "deployment_step")):
-                signal.strength = 'medium'
+            if signal.category in [
+                "package_manager",
+                "ci_cd",
+                "containerization",
+                "serverless",
+                "platform_specific",
+                "kubernetes",
+            ] or (
+                signal.category == "ci_cd" and signal.signal_type == "deployment_step"
+            ):
+                signal.strength = "medium"
             else:
-                signal.strength = 'weak'
+                signal.strength = "weak"
         else:
             # Only one or no components - weak
-            signal.strength = 'weak'
+            signal.strength = "weak"
 
     return signals
+
 
 def _evaluate_deployment_signals(signals: List[DeploymentSignal]) -> bool:
     """
@@ -455,55 +529,79 @@ def _evaluate_deployment_signals(signals: List[DeploymentSignal]) -> bool:
         return False
 
     # Categorize signals by strength
-    strong_signals = [s for s in signals if s.strength == 'strong']
-    medium_signals = [s for s in signals if s.strength == 'medium']
-    weak_signals = [s for s in signals if s.strength == 'weak']
+    strong_signals = [s for s in signals if s.strength == "strong"]
+    medium_signals = [s for s in signals if s.strength == "medium"]
+    weak_signals = [s for s in signals if s.strength == "weak"]
 
     # Rule 1: Only strong signals mean deployable (all 3 components present)
     if strong_signals:
-        logger.info(f"Found {len(strong_signals)} strong deployment signals (all 3 components present) - repository is deployable")
+        logger.info(
+            f"Found {len(strong_signals)} strong deployment signals (all 3 components present) - repository is deployable"
+        )
         return True
 
     # All other cases are not deployable
-    logger.info(f"Insufficient deployment evidence: {len(strong_signals)} strong, {len(medium_signals)} medium, {len(weak_signals)} weak signals")
-    logger.info("Repository requires all 3 components (package manager + CI/CD + way to run) for deployability")
+    logger.info(
+        f"Insufficient deployment evidence: {len(strong_signals)} strong, {len(medium_signals)} medium, {len(weak_signals)} weak signals"
+    )
+    logger.info(
+        "Repository requires all 3 components (package manager + CI/CD + way to run) for deployability"
+    )
     return False
 
+
 IGNORED_DEPLOY_PATHS = [
-    "test/", "tests/", "template/", "templates/",
-    "example/", "examples/", "spec/", "sample/"
+    "test/",
+    "tests/",
+    "template/",
+    "templates/",
+    "example/",
+    "examples/",
+    "spec/",
+    "sample/",
 ]
+
+
 def _is_ignored_deploy_file(file_path: str) -> bool:
     """True if the path is under a test/template/example/spec/sample folder"""
     path_lc = file_path.lower()
     return any(p in path_lc for p in IGNORED_DEPLOY_PATHS)
 
-def has_service_deployment_workflow_llm(repo_path: Path, filtered_strong_signals: List[DeploymentSignal]) -> bool:
+
+def has_service_deployment_workflow_llm(
+    repo_path: Path, filtered_strong_signals: List[DeploymentSignal]
+) -> bool:
     """
     Analyze all workflow files listed in filtered_strong_signals using the LLM classifier agent.
     Returns True if any workflow is classified as 'deployment'.
     Passes strong deployment signals as context to the LLM.
     """
-    logger.info(f"Classifying {len(filtered_strong_signals)} workflow files using LLM agent.")
+    logger.info(
+        f"Classifying {len(filtered_strong_signals)} workflow files using LLM agent."
+    )
 
     # Gather all strong deployment signals (file names) for context
     all_signals = detect_deployment_signals(repo_path)
     strong_signal_files = [
-        signal.file_path for signal in all_signals if signal.strength == 'strong'
+        signal.file_path for signal in all_signals if signal.strength == "strong"
     ]
 
     for signal in filtered_strong_signals:
         wf = repo_path / signal.file_path
         try:
             content = wf.read_text(encoding="utf-8")
-            logger.info(f"Classifying workflow '{wf.name}' using LLM agent. (path: {signal.file_path})")
+            logger.info(
+                f"Classifying workflow '{wf.name}' using LLM agent. (path: {signal.file_path})"
+            )
             classification = workflow_classifier_agent(
                 workflow_content=content,
                 workflow_path=signal.file_path,
                 repo_path=str(repo_path),
-                strong_signals=strong_signal_files
+                strong_signals=strong_signal_files,
             )
-            logger.info(f"AI agent classified workflow '{wf.name}' as: {classification}")
+            logger.info(
+                f"AI agent classified workflow '{wf.name}' as: {classification}"
+            )
             if classification == "deployment":
                 return True
         except Exception as e:

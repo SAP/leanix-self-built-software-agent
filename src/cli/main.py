@@ -13,7 +13,6 @@ import click
 from dotenv import load_dotenv
 from rich.console import Console
 
-from src.logging.logging import configure_structlog, get_logger
 
 # Initialize Rich console for beautiful output
 console = Console()
@@ -21,20 +20,21 @@ console = Console()
 # Package version
 try:
     from importlib.metadata import version
-    __version__ = version('ai-based-discovery')
+
+    __version__ = version("ai-based-discovery")
 except Exception:
-    __version__ = '1.0.0'
+    __version__ = "1.0.0"
 
 
 @click.group()
 @click.option(
-    '--env-file',
+    "--env-file",
     type=click.Path(dir_okay=False, path_type=str),
     default=None,
-    help='Path to .env file (default: .env in current directory)',
-    envvar='ENV_FILE',
+    help="Path to .env file (default: .env in current directory)",
+    envvar="ENV_FILE",
 )
-@click.version_option(version=__version__, prog_name='sbs-ai-discovery')
+@click.version_option(version=__version__, prog_name="sbs-ai-discovery")
 @click.pass_context
 def cli(
     ctx: click.Context,
@@ -67,7 +67,7 @@ def cli(
     load_env_file(env_file)
 
     # Store settings in context for child commands
-    ctx.obj['env_file'] = env_file
+    ctx.obj["env_file"] = env_file
 
 
 def load_env_file(env_file: Optional[str] = None) -> None:
@@ -87,7 +87,7 @@ def load_env_file(env_file: Optional[str] = None) -> None:
         SystemExit: If no env file found and required variables not set
     """
     # Required environment variables to check
-    required_vars = ['GITHUB_TOKEN', 'DATABASE_URL']
+    required_vars = ["GITHUB_TOKEN", "DATABASE_URL"]
 
     # Case 1: Custom env file specified
     if env_file:
@@ -100,7 +100,7 @@ def load_env_file(env_file: Optional[str] = None) -> None:
         return
 
     # Case 2: Try default .env file
-    default_env = Path.cwd() / '.env'
+    default_env = Path.cwd() / ".env"
     if default_env.exists():
         load_dotenv(default_env)
         console.print(f"[dim]Loaded environment from: {default_env}[/dim]")
@@ -115,7 +115,9 @@ def load_env_file(env_file: Optional[str] = None) -> None:
         return
 
     # Case 4: No env file and missing required variables - raise error
-    console.print("[red]Error: No .env file found and required environment variables are not set[/red]")
+    console.print(
+        "[red]Error: No .env file found and required environment variables are not set[/red]"
+    )
     console.print(f"[yellow]Missing variables: {', '.join(missing_vars)}[/yellow]")
     console.print("\n[cyan]Please either:[/cyan]")
     console.print("  1. Create a .env file in the current directory")
@@ -132,13 +134,13 @@ def version(ctx: click.Context) -> None:
 
 
 # Import and register command groups
-from src.cli.discover import discover
-from src.cli.sync import sync_group
-from src.cli.context import context_group
+from src.cli.discover import discover  # noqa: E402
+from src.cli.sync import sync_group  # noqa: E402
+from src.cli.context import context_group  # noqa: E402
 
 cli.add_command(discover)
-cli.add_command(sync_group, name='sync')
-cli.add_command(context_group, name='context')
+cli.add_command(sync_group, name="sync")
+cli.add_command(context_group, name="context")
 
 # These will be added as we implement each command module
 # from src.cli.config import config_group
@@ -148,6 +150,5 @@ cli.add_command(context_group, name='context')
 # cli.add_command(db_group, name='db')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
-

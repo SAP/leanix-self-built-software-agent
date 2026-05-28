@@ -6,16 +6,24 @@ from pydantic import BaseModel, Field
 from src.ai_provider.ai_provider import init_llm_by_provider
 from src.dto.state_dto import RootRepoState
 from src.logging.logging import get_logger
-from src.nodes.runnables.get_languages_and_package_manager_runnable import get_languages_and_package_manager_runnable
+from src.nodes.runnables.get_languages_and_package_manager_runnable import (
+    get_languages_and_package_manager_runnable,
+)
 
 logger = get_logger(__name__)
+
 
 class LanguageResult(BaseModel):
     name: str = Field(description="Language Name")
     version: str = Field(description="Language Version")
-    reason: str = Field(description="Reason for the decision, base on the files found on the service")
+    reason: str = Field(
+        description="Reason for the decision, base on the files found on the service"
+    )
 
-def languages_service_agent(state: RootRepoState, config: RunnableConfig) -> RootRepoState:
+
+def languages_service_agent(
+    state: RootRepoState, config: RunnableConfig
+) -> RootRepoState:
     """Takes repository data, and find languages for each service on the repository"""
 
     # Get model name from config if provided
@@ -61,14 +69,20 @@ def languages_service_agent(state: RootRepoState, config: RunnableConfig) -> Roo
         prompt = PromptTemplate(
             template=prompt_text,
             input_variables=["language_content"],
-            partial_variables={"format_instructions": parser.get_format_instructions()}
+            partial_variables={"format_instructions": parser.get_format_instructions()},
         )
-        service_content = get_languages_and_package_manager_runnable(state.local_path, service.name, service.path)
+        service_content = get_languages_and_package_manager_runnable(
+            state.local_path, service.name, service.path
+        )
         if "language_content" in service_content:
             chain = prompt | llm | parser
             response = chain.invoke({"language_content": service_content["languages"]})
             service.language = response
         else:
-            service.language = [LanguageResult(name="NA", version="", reason="No language files found").dict()]
+            service.language = [
+                LanguageResult(
+                    name="NA", version="", reason="No language files found"
+                ).dict()
+            ]
 
     return state

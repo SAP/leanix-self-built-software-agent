@@ -32,11 +32,14 @@ class Owner:
     team: Optional[str] = None
     individuals: List[Individual] = field(default_factory=list)
 
+
 @dataclass(slots=True)
 class Evidence:
     path: str
     snippet: str
     reason: str
+
+
 @dataclass(slots=True)
 class TechStack:
     name: str
@@ -78,6 +81,7 @@ SelfBuiltByRepo = Dict[str, RootRepoState]
 
 
 # ---------- Serialization helpers ----------
+
 
 def _component_from_dict(d: Dict[str, Any]) -> SelfBuiltComponent:
     owner_raw = d.get("owner") or {}
@@ -136,13 +140,17 @@ def _rootrepo_to_dict(r: RootRepoState) -> Dict[str, Any]:
 
 def load_self_built_by_repo(path: str | Path) -> SelfBuiltByRepo:
     import json
+
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict):
-        raise ValueError("Top-level JSON must be an object mapping root_repo_url -> {...}")
+        raise ValueError(
+            "Top-level JSON must be an object mapping root_repo_url -> {...}"
+        )
     return {root: _rootrepo_from_dict(obj) for root, obj in data.items()}
 
 
 def dump_self_built_by_repo(mapping: SelfBuiltByRepo, path: str | Path) -> None:
     import json
+
     serializable = {root: _rootrepo_to_dict(obj) for root, obj in mapping.items()}
     Path(path).write_text(json.dumps(serializable, indent=2), encoding="utf-8")

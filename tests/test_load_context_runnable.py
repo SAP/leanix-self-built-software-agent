@@ -1,7 +1,7 @@
 """Tests for load_context_runnable module, specifically _extract_org_from_url."""
+
 from __future__ import annotations
 
-import pytest
 
 from src.nodes.runnables.load_context_runnable import _extract_org_from_url
 

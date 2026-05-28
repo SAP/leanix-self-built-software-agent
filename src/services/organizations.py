@@ -6,8 +6,14 @@ from src.db.models import Organization
 
 def get_org(organization_name: str) -> Optional[Organization]:
     with get_session() as session:
-        organization = session.query(Organization).filter(Organization.name == organization_name).first()
+        organization = (
+            session.query(Organization)
+            .filter(Organization.name == organization_name)
+            .first()
+        )
         return organization
+
+
 def create_org_if_not_exists(organization_name: str) -> Organization:
     organization = get_org(organization_name)
     if organization is None:
